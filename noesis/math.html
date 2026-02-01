@@ -105,7 +105,11 @@ function plotGraph() {
             const data = [];
             const step = (domain.max - domain.min) / 200;
             
-            const varName = equation.match(/[a-z]/)?.[0] || 'x';
+            // Extract variables from the parsed expression
+            const symbols = node.filter(node => node.isSymbolNode).map(n => n.name);
+            const funcs = ['sin', 'cos', 'tan', 'sqrt', 'exp', 'log', 'abs', 'ceil', 'floor', 'round', 'sign', 'ln', 'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh'];
+            const vars = symbols.filter(s => !funcs.includes(s));
+            const varName = vars[0] || 'x';
             
             for (let val = domain.min; val <= domain.max; val += step) {
                 const scope = {};
@@ -180,12 +184,10 @@ document.getElementById('addEquation').onclick = () => {
     container.appendChild(createEquationInput());
 };
 
-// Add initial equations
+// Add initial equation
 window.addEventListener('load', () => {
     const container = document.getElementById('equations-container');
-    container.appendChild(createEquationInput('sin(x)'));
-    container.appendChild(createEquationInput('cos(x)'));
-    plotGraph();
+    container.appendChild(createEquationInput(''));
 });
 </script>
 
