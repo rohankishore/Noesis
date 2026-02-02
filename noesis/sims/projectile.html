@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Noesis - Projectile Simulator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-screen bg-neutral-950 text-neutral-200 font-sans">
+
+<div class="flex flex-col h-full">
+
+    <header class="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
+        <h1 class="text-lg tracking-wide font-medium">NOESIS</h1>
+        <div class="flex gap-6 text-sm">
+            <a href="../math.html" class="text-neutral-400 hover:text-neutral-200">Math</a>
+            <a href="../physics.html" class="text-neutral-100 border-b border-neutral-100 pb-1">Physics</a>
+        </div>
+    </header>
+
+    <main class="flex flex-1 overflow-hidden">
+
+        <aside class="w-80 border-r border-neutral-800 p-5 space-y-4 overflow-y-auto">
+            <div>
+                <h2 class="text-sm font-medium mb-4">Projectile Motion</h2>
+            </div>
+            
+            <div>
+                <label class="text-xs uppercase tracking-wider text-neutral-500 mb-1 block">Initial Velocity (m/s)</label>
+                <input type="number" id="velocity" class="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2 text-sm focus:outline-none focus:border-neutral-600" value="50" min="0" max="200">
+            </div>
+            
+            <div>
+                <label class="text-xs uppercase tracking-wider text-neutral-500 mb-1 block">Launch Angle (°)</label>
+                <input type="number" id="angle" class="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2 text-sm focus:outline-none focus:border-neutral-600" value="45" min="0" max="90">
+            </div>
+            
+            <div>
+                <label class="text-xs uppercase tracking-wider text-neutral-500 mb-1 block">Gravity (m/s²)</label>
+                <input type="number" id="gravity" class="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2 text-sm focus:outline-none focus:border-neutral-600" value="9.81" min="0.1" max="50" step="0.01">
+            </div>
+            
+            <div>
+                <label class="text-xs uppercase tracking-wider text-neutral-500 mb-1 block">Initial Height (m)</label>
+                <input type="number" id="height" class="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2 text-sm focus:outline-none focus:border-neutral-600" value="0" min="0" max="100">
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="airResistance" class="w-4 h-4 bg-neutral-900 border border-neutral-800 rounded">
+                <label for="airResistance" class="text-xs uppercase tracking-wider text-neutral-500">Air Resistance</label>
+            </div>
+            
+            <div id="airResistanceControls" class="hidden">
+                <label class="text-xs uppercase tracking-wider text-neutral-500 mb-1 block">Drag Coefficient</label>
+                <input type="number" id="dragCoeff" class="w-full bg-neutral-900 border border-neutral-800 rounded-md p-2 text-sm focus:outline-none focus:border-neutral-600" value="0.47" min="0" max="2" step="0.01">
+            </div>
+            
+            <div class="pt-4 space-y-2">
+                <button id="launch" class="w-full bg-neutral-100 text-neutral-900 rounded-md py-2 text-sm font-medium hover:bg-neutral-200 transition">Launch</button>
+                <button id="reset" class="w-full bg-neutral-800 text-neutral-200 rounded-md py-2 text-sm font-medium hover:bg-neutral-700 transition">Reset</button>
+            </div>
+            
+            <div class="pt-4 border-t border-neutral-800 space-y-2 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-neutral-500">Max Height:</span>
+                    <span id="maxHeight">—</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-neutral-500">Range:</span>
+                    <span id="range">—</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-neutral-500">Flight Time:</span>
+                    <span id="flightTime">—</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-neutral-500">Impact Velocity:</span>
+                    <span id="impactVelocity">—</span>
+                </div>
+            </div>
+        </aside>
+
+        <section class="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-neutral-900 to-black p-4">
+            <canvas id="canvas" class="border border-neutral-800 rounded"></canvas>
+        </section>
+
+    </main>
+
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// Set canvas size
+canvas.width = 1000;
+canvas.height = 600;
+
+// Simulation variables
+let projectile = null;
+let trajectory = [];
+let animationId = null;
+let stats = {
+    maxHeight: 0,
+    range: 0,
+    flightTime: 0,
+    impactVelocity: 0
+};
+
+// Scale factors
+const scale = 2; // pixels per meter
+const originX = 50;
+const originY = canvas.height - 50;
+
+// Input elements
+const velocityInput = document.getElementById('velocity');
+const angleInput = document.getElementById('angle');
+const gravityInput = document.getElementById('gravity');
+const heightInput = document.getElementById('height');
+const airResistanceCheckbox = document.getElementById('airResistance');
+const dragCoeffInput = document.getElementById('dragCoeff');
+const launchBtn = document.getElementById('launch');
+const resetBtn = document.getElementById('reset');
+
+// Toggle air resistance controls
+airResistanceCheckbox.addEventListener('change', () => {
+    document.getElementById('airResistanceControls').classList.toggle('hidden', !airResistanceCheckbox.checked);
+});
+
+// Launch button
+launchBtn.addEventListener('click', launch);
+resetBtn.addEventListener('click', reset);
+
+function launch() {
+    reset();
+    
+    const v0 = parseFloat(velocityInput.value);
+    const angle = parseFloat(angleInput.value) * Math.PI / 180;
+    const g = parseFloat(gravityInput.value);
+    const h0 = parseFloat(heightInput.value);
+    const useAirResistance = airResistanceCheckbox.checked;
+    const dragCoeff = parseFloat(dragCoeffInput.value);
+    
+    projectile = {
+        x: 0,
+        y: h0,
+        vx: v0 * Math.cos(angle),
+        vy: v0 * Math.sin(angle),
+        g: g,
+        useAirResistance: useAirResistance,
+        dragCoeff: dragCoeff,
+        mass: 1,
+        radius: 0.05,
+        airDensity: 1.225,
+        time: 0
+    };
+    
+    trajectory = [{x: projectile.x, y: projectile.y}];
+    stats.maxHeight = h0;
+    
+    animate();
+}
+
+function reset() {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+    projectile = null;
+    trajectory = [];
+    stats = {
+        maxHeight: 0,
+        range: 0,
+        flightTime: 0,
+        impactVelocity: 0
+    };
+    updateStats();
+    draw();
+}
+
+function animate() {
+    if (!projectile) return;
+    
+    const dt = 0.016; // ~60 fps
+    
+    // Calculate forces
+    let ax = 0;
+    let ay = -projectile.g;
+    
+    if (projectile.useAirResistance) {
+        const v = Math.sqrt(projectile.vx ** 2 + projectile.vy ** 2);
+        const area = Math.PI * projectile.radius ** 2;
+        const dragForce = 0.5 * projectile.airDensity * v ** 2 * projectile.dragCoeff * area;
+        const dragAccel = dragForce / projectile.mass;
+        
+        if (v > 0) {
+            ax -= dragAccel * (projectile.vx / v);
+            ay -= dragAccel * (projectile.vy / v);
+        }
+    }
+    
+    // Update velocity
+    projectile.vx += ax * dt;
+    projectile.vy += ay * dt;
+    
+    // Update position
+    projectile.x += projectile.vx * dt;
+    projectile.y += projectile.vy * dt;
+    projectile.time += dt;
+    
+    // Track max height
+    if (projectile.y > stats.maxHeight) {
+        stats.maxHeight = projectile.y;
+    }
+    
+    // Store trajectory point
+    trajectory.push({x: projectile.x, y: projectile.y});
+    
+    draw();
+    
+    // Check if projectile hit the ground
+    if (projectile.y <= 0) {
+        projectile.y = 0;
+        stats.range = projectile.x;
+        stats.flightTime = projectile.time;
+        stats.impactVelocity = Math.sqrt(projectile.vx ** 2 + projectile.vy ** 2);
+        updateStats();
+        projectile = null;
+        return;
+    }
+    
+    // Check if projectile is out of bounds
+    if (projectile.x > canvas.width / scale || projectile.y > canvas.height / scale) {
+        projectile = null;
+        updateStats();
+        return;
+    }
+    
+    animationId = requestAnimationFrame(animate);
+}
+
+function draw() {
+    // Clear canvas
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw grid
+    ctx.strokeStyle = '#262626';
+    ctx.lineWidth = 1;
+    
+    // Vertical lines
+    for (let x = 0; x <= canvas.width; x += 50) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+    
+    // Horizontal lines
+    for (let y = 0; y <= canvas.height; y += 50) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+    
+    // Draw ground
+    ctx.strokeStyle = '#525252';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, originY);
+    ctx.lineTo(canvas.width, originY);
+    ctx.stroke();
+    
+    // Draw trajectory
+    if (trajectory.length > 1) {
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(originX + trajectory[0].x * scale, originY - trajectory[0].y * scale);
+        for (let i = 1; i < trajectory.length; i++) {
+            ctx.lineTo(originX + trajectory[i].x * scale, originY - trajectory[i].y * scale);
+        }
+        ctx.stroke();
+    }
+    
+    // Draw projectile
+    if (projectile) {
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(
+            originX + projectile.x * scale,
+            originY - projectile.y * scale,
+            6,
+            0,
+            2 * Math.PI
+        );
+        ctx.fill();
+        
+        // Draw velocity vector
+        const vecScale = 0.5;
+        ctx.strokeStyle = '#34d399';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(originX + projectile.x * scale, originY - projectile.y * scale);
+        ctx.lineTo(
+            originX + projectile.x * scale + projectile.vx * vecScale,
+            originY - projectile.y * scale - projectile.vy * vecScale
+        );
+        ctx.stroke();
+        
+        // Draw arrowhead
+        const angle = Math.atan2(-projectile.vy, projectile.vx);
+        const headLen = 8;
+        const endX = originX + projectile.x * scale + projectile.vx * vecScale;
+        const endY = originY - projectile.y * scale - projectile.vy * vecScale;
+        
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(
+            endX - headLen * Math.cos(angle - Math.PI / 6),
+            endY + headLen * Math.sin(angle - Math.PI / 6)
+        );
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(
+            endX - headLen * Math.cos(angle + Math.PI / 6),
+            endY + headLen * Math.sin(angle + Math.PI / 6)
+        );
+        ctx.stroke();
+    }
+    
+    // Draw scale reference
+    ctx.fillStyle = '#737373';
+    ctx.font = '12px monospace';
+    ctx.fillText('10m', originX + 20 * scale - 15, originY - 5);
+    ctx.strokeStyle = '#737373';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(originX, originY - 10);
+    ctx.lineTo(originX + 20 * scale, originY - 10);
+    ctx.stroke();
+    
+    // Tick marks
+    ctx.beginPath();
+    ctx.moveTo(originX, originY - 13);
+    ctx.lineTo(originX, originY - 7);
+    ctx.moveTo(originX + 20 * scale, originY - 13);
+    ctx.lineTo(originX + 20 * scale, originY - 7);
+    ctx.stroke();
+}
+
+function updateStats() {
+    document.getElementById('maxHeight').textContent = stats.maxHeight > 0 ? `${stats.maxHeight.toFixed(2)} m` : '—';
+    document.getElementById('range').textContent = stats.range > 0 ? `${stats.range.toFixed(2)} m` : '—';
+    document.getElementById('flightTime').textContent = stats.flightTime > 0 ? `${stats.flightTime.toFixed(2)} s` : '—';
+    document.getElementById('impactVelocity').textContent = stats.impactVelocity > 0 ? `${stats.impactVelocity.toFixed(2)} m/s` : '—';
+}
+
+// Initial draw
+draw();
+</script>
+
+</body>
+</html>
