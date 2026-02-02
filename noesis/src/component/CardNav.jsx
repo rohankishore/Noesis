@@ -8,6 +8,7 @@ const CardNav = ({
   logo,
   logoText,
   logoAlt = 'Logo',
+  onLogoClick,
   items,
   className = '',
   ease = 'power3.out',
@@ -139,7 +140,7 @@ const CardNav = ({
       <nav ref={navRef} className={`card-nav ${isExpanded ? 'open' : ''}`} style={{ backgroundColor: baseColor }}>
         <div className="card-nav-top">
           <div
-            className={`hamburger-menu ${isHamburgerOpen ? 'open' : ''}`}
+            className={`hamburger-menu cursor-target ${isHamburgerOpen ? 'open' : ''}`}
             onClick={toggleMenu}
             role="button"
             aria-label={isExpanded ? 'Close menu' : 'Open menu'}
@@ -150,19 +151,19 @@ const CardNav = ({
             <div className="hamburger-line" />
           </div>
 
-          <div className="logo-container">
+          <div className="logo-container" onClick={onLogoClick} style={{ cursor: onLogoClick ? 'pointer' : 'default' }}>
             {logoText ? (
-              <span className="logo-text" style={{ fontFamily: 'Roboto, sans-serif', fontSize: '1.5rem', fontWeight: '700', color: '#ffffff' }}>
+              <span className="logo-text cursor-target" style={{ fontFamily: 'Roboto, sans-serif', fontSize: '1.5rem', fontWeight: '700', color: '#ffffff' }}>
                 {logoText}
               </span>
             ) : (
-              <img src={logo} alt={logoAlt} className="logo" />
+              <img src={logo} alt={logoAlt} className="logo cursor-target" />
             )}
           </div>
 
           <button
             type="button"
-            className="card-nav-cta-button"
+            className="card-nav-cta-button cursor-target"
             style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
           >
             Get Started

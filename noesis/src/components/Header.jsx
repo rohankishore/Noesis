@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import CardNav from '@/component/CardNav';
 
 export default function Header() {
+  const navigate = useNavigate();
   const navItems = [
     {
       label: 'Mathematics',
@@ -40,6 +41,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto">
         <CardNav
           logoText="Noesis"
+          onLogoClick={() => navigate('/')}
           items={navItems}
           baseColor="#121212"
           menuColor="#ffffff"
