@@ -6,6 +6,7 @@ import './CardNav.css';
 
 const CardNav = ({
   logo,
+  logoText,
   logoAlt = 'Logo',
   items,
   className = '',
@@ -150,7 +151,13 @@ const CardNav = ({
           </div>
 
           <div className="logo-container">
-            <img src={logo} alt={logoAlt} className="logo" />
+            {logoText ? (
+              <span className="logo-text" style={{ fontFamily: 'Roboto, sans-serif', fontSize: '1.5rem', fontWeight: '700', color: '#ffffff' }}>
+                {logoText}
+              </span>
+            ) : (
+              <img src={logo} alt={logoAlt} className="logo" />
+            )}
           </div>
 
           <button

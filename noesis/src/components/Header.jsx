@@ -39,8 +39,7 @@ export default function Header() {
     <header className="fixed w-full top-0 z-50 px-8 py-4">
       <div className="max-w-7xl mx-auto">
         <CardNav
-          logo="/vite.svg"
-          logoAlt="Noesis Logo"
+          logoText="Noesis"
           items={navItems}
           baseColor="#121212"
           menuColor="#ffffff"
