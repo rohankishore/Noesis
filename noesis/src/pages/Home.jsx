@@ -1,24 +1,14 @@
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
-import { FloatingLines } from '@/components/ui/FloatingLines';
+import DarkVeil from '@/component/DarkVeil';
+import GradientText from '@/component/GradientText';
 
 export default function Home() {
   return (
     <div className="min-h-screen text-white relative">
-      {/* Floating Lines Background */}
+      {/* Dark Veil Background */}
       <div className="fixed inset-0 z-0">
-        <FloatingLines 
-          linesGradient={['#667eea', '#764ba2', '#FF6B9D']}
-          lineCount={[6, 8, 6]}
-          lineDistance={[5, 4, 5]}
-          animationSpeed={0.8}
-          interactive={true}
-          bendRadius={5.0}
-          bendStrength={-0.5}
-          parallax={true}
-          parallaxStrength={0.15}
-          mixBlendMode="screen"
-        />
+        <DarkVeil />
       </div>
       
       <div className="flex flex-col min-h-screen relative z-10">
@@ -26,8 +16,12 @@ export default function Home() {
         
         <main className="flex flex-1 items-center justify-center px-8 pt-32 pb-16">
           <div className="text-center space-y-16 max-w-6xl w-full">
-            <div className="space-y-6 floating">
-              <h2 className="text-7xl title-font font-bold gradient-text tracking-tight">Welcome to Noesis</h2>
+            <div className="space-y-6">
+              <h2 className="text-7xl title-font font-bold tracking-tight">
+                <GradientText colors={['#667eea', '#764ba2', '#FF6B9D']}>
+                  Welcome to Noesis
+                </GradientText>
+              </h2>
               <p className="text-white/60 text-xl font-light tracking-wide">Explore the beauty of mathematics and physics</p>
             </div>
 
