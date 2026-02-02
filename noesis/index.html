@@ -18,10 +18,52 @@
         </div>
     </header>
 
-    <main class="flex flex-1 items-center justify-center bg-gradient-to-br from-neutral-900 to-black">
-        <div class="text-center space-y-4">
-            <h2 class="text-2xl font-light tracking-wide">Welcome to Noesis</h2>
-            <p class="text-neutral-400">Select a module to begin</p>
+    <main class="flex flex-1 items-center justify-center bg-gradient-to-br from-neutral-900 to-black p-8">
+        <div class="text-center space-y-12 max-w-5xl w-full">
+            <div class="space-y-4">
+                <h2 class="text-4xl font-light tracking-wide">Welcome to Noesis</h2>
+                <p class="text-neutral-400 text-lg">Select a module to begin</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <!-- Math Card -->
+                <a href="math.html" class="group block bg-neutral-900/30 backdrop-blur-xl border border-neutral-800/50 rounded-3xl p-8 hover:border-neutral-600 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 hover:bg-neutral-900/40">
+                    <div class="flex flex-col items-center text-center space-y-6">
+                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-4xl shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-300">
+                            ∑
+                        </div>
+                        <div class="space-y-2">
+                            <h3 class="text-2xl font-medium text-neutral-100">Mathematics</h3>
+                            <p class="text-neutral-400 leading-relaxed">Explore mathematical concepts, visualizations, and interactive tools for learning and discovery.</p>
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <span class="text-xs px-3 py-1.5 rounded-full bg-neutral-800/50 backdrop-blur text-neutral-300 border border-neutral-700/50">Calculus</span>
+                            <span class="text-xs px-3 py-1.5 rounded-full bg-neutral-800/50 backdrop-blur text-neutral-300 border border-neutral-700/50">Algebra</span>
+                            <span class="text-xs px-3 py-1.5 rounded-full bg-neutral-800/50 backdrop-blur text-neutral-300 border border-neutral-700/50">Geometry</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Physics Card -->
+                <a href="physics.html" class="group block bg-neutral-900/30 backdrop-blur-xl border border-neutral-800/50 rounded-3xl p-8 hover:border-neutral-600 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/10 hover:bg-neutral-900/40">
+                    <div class="flex flex-col items-center text-center space-y-6">
+                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-600 flex items-center justify-center text-4xl shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform duration-300">
+                            ⚡
+                        </div>
+                        <div class="space-y-2">
+                            <h3 class="text-2xl font-medium text-neutral-100">Physics</h3>
+                            <p class="text-neutral-400 leading-relaxed">Simulate physical systems, analyze motion, and understand the fundamental laws governing our universe.</p>
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <span class="text-xs px-3 py-1.5 rounded-full bg-neutral-800/50 backdrop-blur text-neutral-300 border border-neutral-700/50">Mechanics</span>
+                            <span class="text-xs px-3 py-1.5 rounded-full bg-neutral-800/50 backdrop-blur text-neutral-300 border border-neutral-700/50">Kinematics</span>
+                            <span class="text-xs px-3 py-1.5 rounded-full bg-neutral-800/50 backdrop-blur text-neutral-300 border border-neutral-700/50">Energy</span>
+                        </div>
+                    </div>
+                </a>
+
+            </div>
         </div>
     </main>
 
