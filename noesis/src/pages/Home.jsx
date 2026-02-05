@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import DarkVeil from '@/component/DarkVeil';
-import ShinyText from '@/component/ShinyText';
+import GlitchText from '../components/GlitchText';
 import TargetCursor from '@/component/TargetCursor';
 
 export default function Home() {
@@ -51,13 +51,7 @@ export default function Home() {
               </div>
               
               <h1 className="text-8xl md:text-9xl font-bold tracking-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                <ShinyText
-                  text="NOESIS"
-                  speed={3}
-                  color="#ffffff"
-                  shineColor="#667eea"
-                  spread={120}
-                />
+                <GlitchText text="NOESIS" className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-purple-100" />
               </h1>
               
               <p className="text-white/70 text-2xl font-light tracking-wide max-w-3xl mx-auto leading-relaxed">
