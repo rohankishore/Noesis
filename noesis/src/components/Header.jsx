@@ -22,7 +22,8 @@ export default function Header() {
         { label: 'Overview', href: '/physics', ariaLabel: 'Physics Overview' },
         { label: 'Projectile Motion', href: '/projectile', ariaLabel: 'Go to Projectile Motion' },
         { label: 'Pendulum', href: '/pendulum', ariaLabel: 'Go to Pendulum Simulator' },
-        { label: 'Collision Lab', href: '/collision', ariaLabel: 'Go to Collision Lab' }
+        { label: 'Collision Lab', href: '/collision', ariaLabel: 'Go to Collision Lab' },
+        { label: "Newton's Cradle", href: '/newtons-cradle', ariaLabel: "Go to Newton's Cradle" }
       ]
     },
     {
