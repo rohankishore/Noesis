@@ -23,7 +23,7 @@ export default function Header() {
         { label: 'Projectile Motion', href: '/projectile', ariaLabel: 'Go to Projectile Motion' },
         { label: 'Pendulum', href: '/pendulum', ariaLabel: 'Go to Pendulum Simulator' },
         { label: 'Collision Lab', href: '/collision', ariaLabel: 'Go to Collision Lab' },
-        { label: 'Fluid Dynamics', href: '/fluid-dynamics', ariaLabel: 'Go to Fluid Dynamics' }
+        { label: "Pascal's Law", href: '/pascals-law', ariaLabel: "Go to Pascal's Law" }
       ]
     },
     {
