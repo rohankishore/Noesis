@@ -61,20 +61,20 @@ export default function Physics() {
               </div>
             </Link>
 
-            <Link to="/newtons-cradle" className="group block bg-neutral-900/50 backdrop-blur border border-neutral-800 rounded-2xl p-6 hover:border-neutral-600 transition-all duration-300 hover:shadow-lg hover:shadow-neutral-800/50">
+            <Link to="/fluid-dynamics" className="group block bg-neutral-900/50 backdrop-blur border border-neutral-800 rounded-2xl p-6 hover:border-neutral-600 transition-all duration-300 hover:shadow-lg hover:shadow-neutral-800/50">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-400 to-slate-300 flex items-center justify-center text-2xl">
-                  ⚫
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-2xl">
+                  💧
                 </div>
                 <svg className="w-5 h-5 text-neutral-600 group-hover:text-neutral-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                 </svg>
               </div>
-              <h3 className="text-lg font-medium mb-2 text-neutral-100">Newton's Cradle</h3>
-              <p className="text-sm text-neutral-400 leading-relaxed">Watch momentum transfer through elastic collisions. Adjust number of balls and observe conservation laws.</p>
+              <h3 className="text-lg font-medium mb-2 text-neutral-100">Fluid Dynamics</h3>
+              <p className="text-sm text-neutral-400 leading-relaxed">Interactive particle-based fluid simulation. Spawn water, oil, or honey with different viscosity properties.</p>
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="text-xs px-2 py-1 rounded-md bg-neutral-800 text-neutral-400">Elastic</span>
-                <span className="text-xs px-2 py-1 rounded-md bg-neutral-800 text-neutral-400">Transfer</span>
+                <span className="text-xs px-2 py-1 rounded-md bg-neutral-800 text-neutral-400">SPH</span>
+                <span className="text-xs px-2 py-1 rounded-md bg-neutral-800 text-neutral-400">Viscosity</span>
               </div>
             </Link>
 

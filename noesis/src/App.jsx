@@ -5,7 +5,7 @@ import Physics from './pages/Physics';
 import Projectile from './pages/Projectile';
 import Pendulum from './pages/Pendulum';
 import Collision from './pages/Collision';
-import NewtonsCradle from './pages/NewtonsCradle';
+import FluidDynamics from './pages/FluidDynamics';
 import './index.css';
 
 function App() {
@@ -18,7 +18,7 @@ function App() {
         <Route path="/projectile" element={<Projectile />} />
         <Route path="/pendulum" element={<Pendulum />} />
         <Route path="/collision" element={<Collision />} />
-        <Route path="/newtons-cradle" element={<NewtonsCradle />} />
+        <Route path="/fluid-dynamics" element={<FluidDynamics />} />
       </Routes>
     </Router>
   );
