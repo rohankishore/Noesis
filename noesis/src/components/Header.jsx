@@ -24,7 +24,8 @@ export default function Header() {
         { label: 'Energy', href: '/pendulum', ariaLabel: 'Go to Pendulum Simulator' },
         { label: 'Momentum', href: '/collision', ariaLabel: 'Go to Collision Lab' },
         { label: 'Fluids', href: '/pascals-law', ariaLabel: "Go to Pascal's Law" },
-        { label: 'Electromagnetism', href: '/magnetic-field', ariaLabel: 'Go to Magnetic Field' }
+        { label: 'Electromagnetism', href: '/magnetic-field', ariaLabel: 'Go to Magnetic Field' },
+        { label: 'Optics', href: '/refraction', ariaLabel: 'Go to Refraction' }
       ]
     },
     {

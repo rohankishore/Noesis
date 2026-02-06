@@ -112,6 +112,57 @@ export default function Physics() {
               </div>
             </Link>
 
+            <Link to="/refraction" className="group block bg-neutral-900/50 backdrop-blur border border-neutral-800 rounded-2xl p-6 hover:border-neutral-600 transition-all duration-300 hover:shadow-lg hover:shadow-neutral-800/50">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-2xl">
+                  🔦
+                </div>
+                <div className="px-2 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded text-xs text-cyan-400 font-medium">
+                  Optics
+                </div>
+              </div>
+              <h3 className="text-lg font-medium mb-2 text-neutral-100">Refraction</h3>
+              <p className="text-sm text-neutral-400 leading-relaxed">Watch light bend through different materials. Adjust angle and see total internal reflection.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="text-xs px-2 py-1 rounded-md bg-neutral-800 text-neutral-400">Snell's Law</span>
+                <span className="text-xs px-2 py-1 rounded-md bg-neutral-800 text-neutral-400">Light</span>
+              </div>
+            </Link>
+
+            <Link to="/lens-simulator" className="group block bg-neutral-900/50 backdrop-blur border border-neutral-800 rounded-2xl p-6 hover:border-neutral-600 transition-all duration-300 hover:shadow-lg hover:shadow-neutral-800/50">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-2xl">
+                  🔍
+                </div>
+                <div className="px-2 py-1 bg-blue-500/20 border border-blue-500/30 rounded text-xs text-blue-400 font-medium">
+                  Optics
+                </div>
+              </div>
+              <h3 className="text-lg font-medium mb-2 text-neutral-100">Lens Simulator</h3>
+              <p className="text-sm text-neutral-400 leading-relaxed">Ray tracing through convex and concave lenses. Visualize real and virtual images.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="text-xs px-2 py-1 rounded-md bg-neutral-800 text-neutral-400">Ray Tracing</span>
+                <span className="text-xs px-2 py-1 rounded-md bg-neutral-800 text-neutral-400">Lenses</span>
+              </div>
+            </Link>
+
+            <Link to="/prism" className="group block bg-neutral-900/50 backdrop-blur border border-neutral-800 rounded-2xl p-6 hover:border-neutral-600 transition-all duration-300 hover:shadow-lg hover:shadow-neutral-800/50">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-2xl">
+                  🌈
+                </div>
+                <div className="px-2 py-1 bg-pink-500/20 border border-pink-500/30 rounded text-xs text-pink-400 font-medium">
+                  Optics
+                </div>
+              </div>
+              <h3 className="text-lg font-medium mb-2 text-neutral-100">Prism Dispersion</h3>
+              <p className="text-sm text-neutral-400 leading-relaxed">White light splitting into rainbow spectrum. See wavelength-dependent refraction.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="text-xs px-2 py-1 rounded-md bg-neutral-800 text-neutral-400">Dispersion</span>
+                <span className="text-xs px-2 py-1 rounded-md bg-neutral-800 text-neutral-400">Spectrum</span>
+              </div>
+            </Link>
+
           </div>
         </main>
       </div>
