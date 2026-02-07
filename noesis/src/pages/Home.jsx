@@ -51,9 +51,6 @@ export default function Home() {
           <div className="text-center space-y-20 max-w-7xl w-full">
             <div className="space-y-8">
               <div className="inline-block mb-4">
-                <div className="px-4 py-2 rounded-full glass border border-white/10 dark:border-white/10 border-neutral-300 text-sm text-neutral-700 dark:text-white/80 tracking-wider">
-                  Interactive Physics & Math Platform
-                </div>
               </div>
               
               <h1 className="text-8xl md:text-9xl font-bold tracking-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
