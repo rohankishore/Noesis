@@ -295,11 +295,11 @@ export default function MathNew() {
       ctx.lineWidth = 2.5;
 
       if (isImplicit) {
-        // Use parametric drawing for perfect closed curves
         const expr = func.expression.trim();
         
-        // Circle: x^2 + y^2 = r^2
+        // Special cases with parametric equations for perfect shapes
         if (expr.startsWith('x^2 + y^2')) {
+          // Circle: x^2 + y^2 = r^2
           const r = params.r || 2;
           ctx.beginPath();
           const segments = 200;
@@ -313,8 +313,8 @@ export default function MathNew() {
           }
           ctx.stroke();
         }
-        // Ellipse: (x/a)^2 + (y/b)^2 = 1
         else if (expr.match(/\(x\/[a-z]\)\^2\s*\+\s*\(y\/[a-z]\)\^2/i)) {
+          // Ellipse: (x/a)^2 + (y/b)^2 = 1
           const a = params.a || 2;
           const b = params.b || 1;
           ctx.beginPath();
@@ -329,12 +329,10 @@ export default function MathNew() {
           }
           ctx.stroke();
         }
-        // Hyperbola: (x/a)^2 - (y/b)^2 = 1
         else if (expr.match(/\(x\/[a-z]\)\^2\s*-\s*\(y\/[a-z]\)\^2/i)) {
+          // Hyperbola: (x/a)^2 - (y/b)^2 = 1
           const a = params.a || 2;
           const b = params.b || 1;
-          
-          // Draw both branches
           [-1, 1].forEach(sign => {
             ctx.beginPath();
             const tMin = -3;
@@ -350,6 +348,39 @@ export default function MathNew() {
             }
             ctx.stroke();
           });
+        }
+        else {
+          // General implicit equation using marching squares
+          const bounds = {
+            minX: pixelToGraph(0, 0).x,
+            maxX: pixelToGraph(w, 0).x,
+            minY: pixelToGraph(0, h).y,
+            maxY: pixelToGraph(0, 0).y
+          };
+          
+          const gridSize = 0.05;
+          const threshold = 0.01;
+          
+          // Sample the implicit function on a grid
+          for (let gx = bounds.minX; gx < bounds.maxX; gx += gridSize) {
+            for (let gy = bounds.minY; gy < bounds.maxY; gy += gridSize) {
+              const v00 = evaluateImplicit(expr, gx, gy, params);
+              const v10 = evaluateImplicit(expr, gx + gridSize, gy, params);
+              const v01 = evaluateImplicit(expr, gx, gy + gridSize, params);
+              const v11 = evaluateImplicit(expr, gx + gridSize, gy + gridSize, params);
+              
+              if (v00 === null || v10 === null || v01 === null || v11 === null) continue;
+              
+              // Check if the cell contains a zero crossing
+              const signs = [v00, v10, v01, v11].map(v => Math.sign(v));
+              const hasZeroCrossing = signs.some((s, i) => signs.some((s2, j) => i !== j && s !== s2));
+              
+              if (hasZeroCrossing || Math.abs(v00) < threshold) {
+                const px = graphToPixel(gx + gridSize/2, gy + gridSize/2);
+                ctx.fillRect(px.x - 1, px.y - 1, 2, 2);
+              }
+            }
+          }
         }
       } else {
         // Regular function
@@ -518,6 +549,9 @@ export default function MathNew() {
       case 'parabola':
         expressions = [{ expr: 'a*x^2', desc: 'Parabola' }];
         break;
+      case 'heart':
+        expressions = [{ expr: '(x^2 + y^2 - 1)^3 = x^2 * y^3', desc: 'Heart' }];
+        break;
       case 'sine':
         expressions = [{ expr: 'a*sin(b*x)', desc: 'Sine wave' }];
         break;
@@ -604,6 +638,12 @@ export default function MathNew() {
                   className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm flex items-center gap-2"
                 >
                   <span>⌒</span> Parabola
+                </button>
+                <button
+                  onClick={() => addPresetFunction('heart')}
+                  className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm flex items-center gap-2"
+                >
+                  <span>♥</span> Heart
                 </button>
                 <div className="border-t border-gray-200 my-1"></div>
                 <button
