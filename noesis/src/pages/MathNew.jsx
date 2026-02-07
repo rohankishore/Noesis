@@ -29,6 +29,7 @@ export default function MathNew() {
   const [showGrid, setShowGrid] = useState(true);
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [showShapesMenu, setShowShapesMenu] = useState(false);
+  const [showSliders, setShowSliders] = useState(false);
   const nextId = useRef(1);
 
   const pixelToGraph = (px, py) => {
@@ -250,6 +251,58 @@ export default function MathNew() {
     ctx.lineTo(origin.x, h);
     ctx.stroke();
 
+    // Draw axis labels
+    const gridSpacing = Math.pow(10, Math.floor(Math.log10(50 / viewport.scale)));
+    const bounds = {
+      minX: pixelToGraph(0, 0).x,
+      maxX: pixelToGraph(w, 0).x,
+      minY: pixelToGraph(0, h).y,
+      maxY: pixelToGraph(0, 0).y
+    };
+    const startX = Math.floor(bounds.minX / gridSpacing) * gridSpacing;
+    const startY = Math.floor(bounds.minY / gridSpacing) * gridSpacing;
+    
+    ctx.fillStyle = '#666';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    
+    // X-axis labels
+    for (let x = startX; x <= bounds.maxX; x += gridSpacing) {
+      if (Math.abs(x) < gridSpacing / 2) continue; // Skip 0
+      const px = graphToPixel(x, 0).x;
+      const py = origin.y;
+      // Tick mark
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(px, py - 5);
+      ctx.lineTo(px, py + 5);
+      ctx.stroke();
+      // Label
+      const label = Math.abs(x) < 0.01 ? '0' : (Math.abs(x) >= 1 ? x.toFixed(0) : x.toFixed(1));
+      ctx.fillText(label, px, py + 8);
+    }
+    
+    // Y-axis labels
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let y = startY; y <= bounds.maxY; y += gridSpacing) {
+      if (Math.abs(y) < gridSpacing / 2) continue; // Skip 0
+      const px = origin.x;
+      const py = graphToPixel(0, y).y;
+      // Tick mark
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(px - 5, py);
+      ctx.lineTo(px + 5, py);
+      ctx.stroke();
+      // Label
+      const label = Math.abs(y) < 0.01 ? '0' : (Math.abs(y) >= 1 ? y.toFixed(0) : y.toFixed(1));
+      ctx.fillText(label, px - 8, py);
+    }
+
     objects.forEach(obj => {
       if (!obj.visible) return;
       const isSelected = selectedObjects.includes(obj.id);
@@ -300,54 +353,76 @@ export default function MathNew() {
         // Special cases with parametric equations for perfect shapes
         if (expr.startsWith('x^2 + y^2')) {
           // Circle: x^2 + y^2 = r^2
-          const r = params.r || 2;
-          ctx.beginPath();
-          const segments = 200;
-          for (let i = 0; i <= segments; i++) {
-            const t = (i / segments) * 2 * Math.PI;
-            const x = r * Math.cos(t);
-            const y = r * Math.sin(t);
-            const p = graphToPixel(x, y);
-            if (i === 0) ctx.moveTo(p.x, p.y);
-            else ctx.lineTo(p.x, p.y);
-          }
-          ctx.stroke();
-        }
-        else if (expr.match(/\(x\/[a-z]\)\^2\s*\+\s*\(y\/[a-z]\)\^2/i)) {
-          // Ellipse: (x/a)^2 + (y/b)^2 = 1
-          const a = params.a || 2;
-          const b = params.b || 1;
-          ctx.beginPath();
-          const segments = 200;
-          for (let i = 0; i <= segments; i++) {
-            const t = (i / segments) * 2 * Math.PI;
-            const x = a * Math.cos(t);
-            const y = b * Math.sin(t);
-            const p = graphToPixel(x, y);
-            if (i === 0) ctx.moveTo(p.x, p.y);
-            else ctx.lineTo(p.x, p.y);
-          }
-          ctx.stroke();
-        }
-        else if (expr.match(/\(x\/[a-z]\)\^2\s*-\s*\(y\/[a-z]\)\^2/i)) {
-          // Hyperbola: (x/a)^2 - (y/b)^2 = 1
-          const a = params.a || 2;
-          const b = params.b || 1;
-          [-1, 1].forEach(sign => {
+          try {
+            const [left, right] = expr.split('=').map(s => s.trim());
+            const rSquared = math.parse(right).evaluate(params);
+            const r = Math.sqrt(rSquared);
             ctx.beginPath();
-            const tMin = -3;
-            const tMax = 3;
-            const segments = 100;
+            const segments = 200;
             for (let i = 0; i <= segments; i++) {
-              const t = tMin + (i / segments) * (tMax - tMin);
-              const x = sign * a * Math.cosh(t);
-              const y = b * Math.sinh(t);
+              const t = (i / segments) * 2 * Math.PI;
+              const x = r * Math.cos(t);
+              const y = r * Math.sin(t);
               const p = graphToPixel(x, y);
               if (i === 0) ctx.moveTo(p.x, p.y);
               else ctx.lineTo(p.x, p.y);
             }
             ctx.stroke();
-          });
+          } catch (e) {
+            // Fall back to general implicit rendering
+          }
+        }
+        else if (expr.match(/\(x\/[a-z]\)\^2\s*\+\s*\(y\/[a-z]\)\^2/i)) {
+          // Ellipse: (x/a)^2 + (y/b)^2 = 1
+          try {
+            const aMatch = expr.match(/\(x\/([a-z])\)/i);
+            const bMatch = expr.match(/\(y\/([a-z])\)/i);
+            if (aMatch && bMatch) {
+              const a = params[aMatch[1]] || 2;
+              const b = params[bMatch[1]] || 1;
+              ctx.beginPath();
+              const segments = 200;
+              for (let i = 0; i <= segments; i++) {
+                const t = (i / segments) * 2 * Math.PI;
+                const x = a * Math.cos(t);
+                const y = b * Math.sin(t);
+                const p = graphToPixel(x, y);
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+              }
+              ctx.stroke();
+            }
+          } catch (e) {
+            // Fall back to general implicit rendering
+          }
+        }
+        else if (expr.match(/\(x\/[a-z]\)\^2\s*-\s*\(y\/[a-z]\)\^2/i)) {
+          // Hyperbola: (x/a)^2 - (y/b)^2 = 1
+          try {
+            const aMatch = expr.match(/\(x\/([a-z])\)/i);
+            const bMatch = expr.match(/\(y\/([a-z])\)/i);
+            if (aMatch && bMatch) {
+              const a = params[aMatch[1]] || 2;
+              const b = params[bMatch[1]] || 1;
+              [-1, 1].forEach(sign => {
+                ctx.beginPath();
+                const tMin = -3;
+                const tMax = 3;
+                const segments = 100;
+                for (let i = 0; i <= segments; i++) {
+                  const t = tMin + (i / segments) * (tMax - tMin);
+                  const x = sign * a * Math.cosh(t);
+                  const y = b * Math.sinh(t);
+                  const p = graphToPixel(x, y);
+                  if (i === 0) ctx.moveTo(p.x, p.y);
+                  else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+              });
+            }
+          } catch (e) {
+            // Fall back to general implicit rendering
+          }
         }
         else {
           // General implicit equation using marching squares
@@ -358,8 +433,10 @@ export default function MathNew() {
             maxY: pixelToGraph(0, 0).y
           };
           
-          const gridSize = 0.05;
+          const gridSize = 0.02;
           const threshold = 0.01;
+          
+          ctx.fillStyle = func.color;
           
           // Sample the implicit function on a grid
           for (let gx = bounds.minX; gx < bounds.maxX; gx += gridSize) {
@@ -508,7 +585,38 @@ export default function MathNew() {
   };
 
   const updateFunction = (id, expression) => {
-    setFunctions(functions.map(f => f.id === id ? { ...f, expression } : f));
+    // Parse function notation shortcuts
+    let parsedExpr = expression;
+    
+    // circle(r) -> x^2 + y^2 = r^2
+    const circleMatch = expression.match(/^circle\s*\(\s*([^)]+)\s*\)$/i);
+    if (circleMatch) {
+      const r = circleMatch[1].trim();
+      parsedExpr = `x^2 + y^2 = (${r})^2`;
+    }
+    
+    // ellipse(a, b) -> (x/a)^2 + (y/b)^2 = 1
+    const ellipseMatch = expression.match(/^ellipse\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)$/i);
+    if (ellipseMatch) {
+      const a = ellipseMatch[1].trim();
+      const b = ellipseMatch[2].trim();
+      parsedExpr = `(x/(${a}))^2 + (y/(${b}))^2 = 1`;
+    }
+    
+    // heart -> (x^2 + y^2 - 1)^3 = x^2 * y^3
+    if (expression.match(/^heart$/i)) {
+      parsedExpr = '(x^2 + y^2 - 1)^3 = x^2 * y^3';
+    }
+    
+    // hyperbola(a, b) -> (x/a)^2 - (y/b)^2 = 1
+    const hyperbolaMatch = expression.match(/^hyperbola\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)$/i);
+    if (hyperbolaMatch) {
+      const a = hyperbolaMatch[1].trim();
+      const b = hyperbolaMatch[2].trim();
+      parsedExpr = `(x/(${a}))^2 - (y/(${b}))^2 = 1`;
+    }
+    
+    setFunctions(functions.map(f => f.id === id ? { ...f, expression: parsedExpr } : f));
   };
 
   const toggleFunction = (id) => {
@@ -694,87 +802,105 @@ export default function MathNew() {
 
               {/* Functions */}
               <div className="p-3 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase">Functions</h4>
-                  <button
-                    onClick={addFunction}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
-                  >
-                    + Add
-                  </button>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Functions</h4>
+                <div className="space-y-2">
+                  {functions.map((func, idx) => (
+                    <div key={func.id} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={func.visible}
+                        onChange={() => toggleFunction(func.id)}
+                        className="w-4 h-4"
+                      />
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: func.color }} />
+                      <input
+                        type="text"
+                        className="flex-1 bg-white border border-gray-300 px-2 py-1 rounded text-sm font-mono focus:outline-none focus:border-blue-400"
+                        placeholder="e.g., sin(a*x), circle(5), heart"
+                        value={func.expression}
+                        onChange={(e) => {
+                          updateFunction(func.id, e.target.value);
+                          // Add a new empty function if this is the last one and it has content
+                          if (idx === functions.length - 1 && e.target.value.trim()) {
+                            addFunction();
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => removeFunction(func.id)}
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {functions.length === 0 && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={true}
+                        className="w-4 h-4"
+                        disabled
+                      />
+                      <div className="w-3 h-3 rounded-full bg-blue-500" />
+                      <input
+                        type="text"
+                        className="flex-1 bg-white border border-gray-300 px-2 py-1 rounded text-sm font-mono focus:outline-none focus:border-blue-400"
+                        placeholder="e.g., sin(a*x), circle(5), heart"
+                        onFocus={addFunction}
+                      />
+                    </div>
+                  )}
                 </div>
-
-                {functions.length === 0 ? (
-                  <p className="text-sm text-gray-400 italic">No functions</p>
-                ) : (
-                  <div className="space-y-2">
-                    {functions.map((func) => (
-                      <div key={func.id} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={func.visible}
-                          onChange={() => toggleFunction(func.id)}
-                          className="w-4 h-4"
-                        />
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: func.color }} />
-                        <input
-                          type="text"
-                          className="flex-1 bg-white border border-gray-300 px-2 py-1 rounded text-sm font-mono focus:outline-none focus:border-blue-400"
-                          placeholder="e.g., sin(a*x)"
-                          value={func.expression}
-                          onChange={(e) => updateFunction(func.id, e.target.value)}
-                        />
-                        <button
-                          onClick={() => removeFunction(func.id)}
-                          className="text-gray-400 hover:text-red-500"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Sliders */}
               {Object.keys(parameters).length > 0 && (
                 <div className="p-3">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">Sliders</h4>
-                  <div className="space-y-4">
-                    {Object.entries(parameters).map(([name, param]) => (
-                      <div key={name} className="bg-white p-3 rounded border border-gray-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-sm font-semibold font-mono">{name}</label>
-                          <span className="text-sm font-mono text-blue-600 font-semibold">{param.value.toFixed(2)}</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={param.min}
-                          max={param.max}
-                          step="0.01"
-                          value={param.value}
-                          onChange={(e) => updateParameter(name, 'value', e.target.value)}
-                          className="w-full accent-blue-500"
-                        />
-                        <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => setShowSliders(!showSliders)}
+                    className="w-full flex items-center justify-between text-xs font-semibold text-gray-500 uppercase mb-2 hover:text-gray-700"
+                  >
+                    <span>Sliders ({Object.keys(parameters).length})</span>
+                    <span>{showSliders ? '▼' : '▶'}</span>
+                  </button>
+                  {showSliders && (
+                    <div className="space-y-4">
+                      {Object.entries(parameters).map(([name, param]) => (
+                        <div key={name} className="bg-white p-3 rounded border border-gray-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-sm font-semibold font-mono">{name}</label>
+                            <span className="text-sm font-mono text-blue-600 font-semibold">{param.value.toFixed(2)}</span>
+                          </div>
                           <input
-                            type="number"
-                            value={param.min}
-                            onChange={(e) => updateParameter(name, 'min', e.target.value)}
-                            className="w-20 bg-gray-50 border border-gray-300 px-2 py-1 rounded text-xs"
-                            placeholder="min"
+                            type="range"
+                            min={param.min}
+                            max={param.max}
+                            step="0.01"
+                            value={param.value}
+                            onChange={(e) => updateParameter(name, 'value', e.target.value)}
+                            className="w-full accent-blue-500"
                           />
-                          <input
-                            type="number"
-                            value={param.max}
-                            onChange={(e) => updateParameter(name, 'max', e.target.value)}
-                            className="w-20 bg-gray-50 border border-gray-300 px-2 py-1 rounded text-xs"
-                            placeholder="max"
-                          />
+                          <div className="flex gap-2 mt-2">
+                            <input
+                              type="number"
+                              value={param.min}
+                              onChange={(e) => updateParameter(name, 'min', e.target.value)}
+                              className="w-20 bg-gray-50 border border-gray-300 px-2 py-1 rounded text-xs"
+                              placeholder="min"
+                            />
+                            <input
+                              type="number"
+                              value={param.max}
+                              onChange={(e) => updateParameter(name, 'max', e.target.value)}
+                              className="w-20 bg-gray-50 border border-gray-300 px-2 py-1 rounded text-xs"
+                              placeholder="max"
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
