@@ -136,7 +136,7 @@ export default function MathNew() {
 
   useEffect(() => {
     draw();
-  }, [objects, functions, viewport, showGrid, hoveredObject, selectedObjects, tempConstruction]);
+  }, [objects, functions, parameters, viewport, showGrid, hoveredObject, selectedObjects, tempConstruction]);
 
   const draw = () => {
     const canvas = canvasRef.current;
@@ -409,23 +409,111 @@ export default function MathNew() {
               <h3 className="font-semibold text-sm text-blue-600">Algebra View</h3>
               <button onClick={() => setShowAlgebra(false)} className="text-gray-500 hover:text-gray-700">×</button>
             </div>
-            <div className="flex-1 overflow-y-auto p-3">
-              <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Objects</h4>
-              {objects.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">No objects created</p>
-              ) : (
-                <div className="space-y-1">
-                  {objects.map(obj => (
-                    <div key={obj.id} className={`flex items-center gap-2 p-2 rounded text-sm cursor-pointer ${
-                      selectedObjects.includes(obj.id) ? 'bg-blue-100' : 'hover:bg-gray-100'
-                    }`} onClick={() => setSelectedObjects([obj.id])}>
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: obj.color }} />
-                      <div className="flex-1">
-                        <div className="font-semibold">{obj.label}</div>
-                        <div className="text-xs text-gray-600">({obj.x.toFixed(2)}, {obj.y.toFixed(2)})</div>
+            <div className="flex-1 overflow-y-auto">
+              {/* Objects */}
+              <div className="p-3 border-b border-gray-200">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Objects</h4>
+                {objects.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">No objects</p>
+                ) : (
+                  <div className="space-y-1">
+                    {objects.map(obj => (
+                      <div key={obj.id} className={`flex items-center gap-2 p-2 rounded text-sm cursor-pointer ${
+                        selectedObjects.includes(obj.id) ? 'bg-blue-100' : 'hover:bg-gray-100'
+                      }`} onClick={() => setSelectedObjects([obj.id])}>
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: obj.color }} />
+                        <div className="flex-1">
+                          <div className="font-semibold">{obj.label}</div>
+                          <div className="text-xs text-gray-600">({obj.x.toFixed(2)}, {obj.y.toFixed(2)})</div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Functions */}
+              <div className="p-3 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase">Functions</h4>
+                  <button
+                    onClick={addFunction}
+                    className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                  >
+                    + Add
+                  </button>
+                </div>
+                {functions.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">No functions</p>
+                ) : (
+                  <div className="space-y-2">
+                    {functions.map((func) => (
+                      <div key={func.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={func.visible}
+                          onChange={() => toggleFunction(func.id)}
+                          className="w-4 h-4"
+                        />
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: func.color }} />
+                        <input
+                          type="text"
+                          className="flex-1 bg-white border border-gray-300 px-2 py-1 rounded text-sm font-mono focus:outline-none focus:border-blue-400"
+                          placeholder="e.g., sin(a*x)"
+                          value={func.expression}
+                          onChange={(e) => updateFunction(func.id, e.target.value)}
+                        />
+                        <button
+                          onClick={() => removeFunction(func.id)}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Sliders */}
+              {Object.keys(parameters).length > 0 && (
+                <div className="p-3">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">Sliders</h4>
+                  <div className="space-y-4">
+                    {Object.entries(parameters).map(([name, param]) => (
+                      <div key={name} className="bg-white p-3 rounded border border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-semibold font-mono">{name}</label>
+                          <span className="text-sm font-mono text-blue-600 font-semibold">{param.value.toFixed(2)}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={param.min}
+                          max={param.max}
+                          step="0.01"
+                          value={param.value}
+                          onChange={(e) => updateParameter(name, 'value', e.target.value)}
+                          className="w-full accent-blue-500"
+                        />
+                        <div className="flex gap-2 mt-2">
+                          <input
+                            type="number"
+                            value={param.min}
+                            onChange={(e) => updateParameter(name, 'min', e.target.value)}
+                            className="w-20 bg-gray-50 border border-gray-300 px-2 py-1 rounded text-xs"
+                            placeholder="min"
+                          />
+                          <input
+                            type="number"
+                            value={param.max}
+                            onChange={(e) => updateParameter(name, 'max', e.target.value)}
+                            className="w-20 bg-gray-50 border border-gray-300 px-2 py-1 rounded text-xs"
+                            placeholder="max"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
