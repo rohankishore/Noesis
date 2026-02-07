@@ -606,8 +606,15 @@ export default function MathNew() {
   };
 
   const commitFunction = (id, expression) => {
+    // Convert |x| notation to abs(x)
+    let processedExpr = expression;
+    // Handle nested absolute values by replacing from innermost to outermost
+    while (processedExpr.includes('|')) {
+      processedExpr = processedExpr.replace(/\|([^|]+)\|/g, 'abs($1)');
+    }
+    
     // Check for point notation: a = (x, y)
-    const pointMatch = expression.match(/^([a-zA-Z])\s*=\s*\(\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)$/);
+    const pointMatch = processedExpr.match(/^([a-zA-Z])\s*=\s*\(\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)$/);
     if (pointMatch) {
       const label = pointMatch[1];
       const x = parseFloat(pointMatch[2]);
@@ -651,17 +658,17 @@ export default function MathNew() {
     }
     
     // Parse function notation shortcuts
-    let parsedExpr = expression;
+    let parsedExpr = processedExpr;
     
     // circle(r) -> x^2 + y^2 = r^2
-    const circleMatch = expression.match(/^circle\s*\(\s*([^)]+)\s*\)$/i);
+    const circleMatch = processedExpr.match(/^circle\s*\(\s*([^)]+)\s*\)$/i);
     if (circleMatch) {
       const r = circleMatch[1].trim();
       parsedExpr = `x^2 + y^2 = (${r})^2`;
     }
     
     // ellipse(a, b) -> (x/a)^2 + (y/b)^2 = 1
-    const ellipseMatch = expression.match(/^ellipse\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)$/i);
+    const ellipseMatch = processedExpr.match(/^ellipse\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)$/i);
     if (ellipseMatch) {
       const a = ellipseMatch[1].trim();
       const b = ellipseMatch[2].trim();
@@ -669,12 +676,12 @@ export default function MathNew() {
     }
     
     // heart -> (x^2 + y^2 - 1)^3 = x^2 * y^3
-    if (expression.match(/^heart$/i)) {
+    if (processedExpr.match(/^heart$/i)) {
       parsedExpr = '(x^2 + y^2 - 1)^3 = x^2 * y^3';
     }
     
     // hyperbola(a, b) -> (x/a)^2 - (y/b)^2 = 1
-    const hyperbolaMatch = expression.match(/^hyperbola\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)$/i);
+    const hyperbolaMatch = processedExpr.match(/^hyperbola\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)$/i);
     if (hyperbolaMatch) {
       const a = hyperbolaMatch[1].trim();
       const b = hyperbolaMatch[2].trim();
@@ -882,7 +889,7 @@ export default function MathNew() {
                       <input
                         type="text"
                         className="flex-1 bg-white border border-gray-300 px-2 py-1 rounded text-sm font-mono focus:outline-none focus:border-blue-400"
-                        placeholder="e.g., a=(2,3), sin(x), circle(5), heart (press Enter)"
+                        placeholder="e.g., |x|, sin(x), a=(2,3), circle(5) (press Enter)"
                         value={func.draftExpression !== undefined ? func.draftExpression : func.expression}
                         onChange={(e) => {
                           updateDraftExpression(func.id, e.target.value);
