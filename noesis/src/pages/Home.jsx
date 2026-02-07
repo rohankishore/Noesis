@@ -24,17 +24,23 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen text-white relative overflow-hidden">
+    <div className="min-h-screen text-white dark:text-white bg-white dark:bg-transparent relative overflow-hidden">
       <TargetCursor targetSelector=".cursor-target" />
       
-      <div className="fixed inset-0 z-0">
+      <div className="fixed inset-0 z-0 dark:block hidden">
         <DarkVeil />
       </div>
+
+      <div className="fixed inset-0 z-0 dark:hidden block bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50" />
 
       <div 
         className="fixed inset-0 z-0 pointer-events-none"
         style={{
-          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(102, 126, 234, 0.15), transparent 40%)`
+          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, ${
+            document.documentElement.classList.contains('dark') 
+              ? 'rgba(102, 126, 234, 0.15)' 
+              : 'rgba(102, 126, 234, 0.08)'
+          }, transparent 40%)`
         }}
       />
       
