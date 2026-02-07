@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
-import Math from './pages/Math';
+import Math from './pages/MathNew';
 import Physics from './pages/Physics';
 import Projectile from './pages/Projectile';
 import Pendulum from './pages/Pendulum';
