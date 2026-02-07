@@ -595,12 +595,17 @@ export default function MathNew() {
     setFunctions([...functions, {
       id: newId,
       expression: '',
+      draftExpression: '',
       visible: true,
       color: colors[functions.length % colors.length]
     }]);
   };
 
-  const updateFunction = (id, expression) => {
+  const updateDraftExpression = (id, draftExpression) => {
+    setFunctions(functions.map(f => f.id === id ? { ...f, draftExpression } : f));
+  };
+
+  const commitFunction = (id, expression) => {
     // Check for point notation: a = (x, y)
     const pointMatch = expression.match(/^([a-zA-Z])\s*=\s*\(\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)$/);
     if (pointMatch) {
@@ -636,6 +641,7 @@ export default function MathNew() {
         updatedFunctions.push({
           id: newId,
           expression: '',
+          draftExpression: '',
           visible: true,
           color: colors[updatedFunctions.length % colors.length]
         });
@@ -675,7 +681,7 @@ export default function MathNew() {
       parsedExpr = `(x/(${a}))^2 - (y/(${b}))^2 = 1`;
     }
     
-    setFunctions(functions.map(f => f.id === id ? { ...f, expression: parsedExpr } : f));
+    setFunctions(functions.map(f => f.id === id ? { ...f, expression: parsedExpr, draftExpression: parsedExpr } : f));
   };
 
   const toggleFunction = (id) => {
@@ -730,6 +736,7 @@ export default function MathNew() {
     const newFuncs = expressions.map((e, i) => ({
       id: nextId.current++,
       expression: e.expr,
+      draftExpression: e.expr,
       visible: true,
       color: colors[(functions.length + i) % colors.length]
     }));
@@ -875,13 +882,24 @@ export default function MathNew() {
                       <input
                         type="text"
                         className="flex-1 bg-white border border-gray-300 px-2 py-1 rounded text-sm font-mono focus:outline-none focus:border-blue-400"
-                        placeholder="e.g., a=(2,3), sin(x), circle(5), heart"
-                        value={func.expression}
+                        placeholder="e.g., a=(2,3), sin(x), circle(5), heart (press Enter)"
+                        value={func.draftExpression !== undefined ? func.draftExpression : func.expression}
                         onChange={(e) => {
-                          updateFunction(func.id, e.target.value);
-                          // Add a new empty function if this is the last one and it has content
-                          if (idx === functions.length - 1 && e.target.value.trim()) {
-                            addFunction();
+                          updateDraftExpression(func.id, e.target.value);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            commitFunction(func.id, e.target.value);
+                            // Add a new empty function if this is the last one and it has content
+                            if (idx === functions.length - 1 && e.target.value.trim()) {
+                              addFunction();
+                            }
+                          }
+                        }}
+                        onBlur={(e) => {
+                          // Commit on blur as well
+                          if (e.target.value.trim()) {
+                            commitFunction(func.id, e.target.value);
                           }
                         }}
                       />
@@ -905,7 +923,7 @@ export default function MathNew() {
                       <input
                         type="text"
                         className="flex-1 bg-white border border-gray-300 px-2 py-1 rounded text-sm font-mono focus:outline-none focus:border-blue-400"
-                        placeholder="e.g., a=(2,3), sin(x), circle(5), heart"
+                        placeholder="e.g., a=(2,3), sin(x), circle(5), heart (press Enter)"
                         onFocus={addFunction}
                       />
                     </div>
