@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Header from '../components/Header';
 import { create, all } from 'mathjs';
-import { FiZoomIn, FiZoomOut, FiMaximize2, FiMove, FiCircle, FiSlash, FiSquare } from 'react-icons/fi';
-import { TbPoint, TbLine, TbPolygon, TbRuler, TbAngle } from 'react-icons/tb';
+import { FiZoomIn, FiZoomOut, FiMaximize2, FiMove, FiCircle, FiSlash, FiSquare, FiMinus } from 'react-icons/fi';
+import { BiCircle } from 'react-icons/bi';
 
 const math = create(all);
 
@@ -226,21 +226,21 @@ export default function Math() {
     ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
     
-    const { x: minX } = pixelToGraph(0, 0);
-    const { x: maxX } = pixelToGraph(w, 0);
-    const labelSpacing = Math.pow(10, Math.floor(Math.log10((maxX - minX) / 10)));
+    const { x: axisMinX } = pixelToGraph(0, 0);
+    const { x: axisMaxX } = pixelToGraph(w, 0);
+    const labelSpacing = Math.pow(10, Math.floor(Math.log10((axisMaxX - axisMinX) / 10)));
     
-    for (let x = Math.ceil(minX / labelSpacing) * labelSpacing; x <= maxX; x += labelSpacing) {
+    for (let x = Math.ceil(axisMinX / labelSpacing) * labelSpacing; x <= axisMaxX; x += labelSpacing) {
       if (Math.abs(x) < labelSpacing / 2) continue;
       const px = graphToPixel(x, 0).x;
       ctx.fillText(x.toFixed(labelSpacing < 1 ? 1 : 0), px, origin.y + 15);
     }
     
     ctx.textAlign = 'right';
-    const { y: minY } = pixelToGraph(0, h);
-    const { y: maxY } = pixelToGraph(0, 0);
+    const { y: axisMinY } = pixelToGraph(0, h);
+    const { y: axisMaxY } = pixelToGraph(0, 0);
     
-    for (let y = Math.ceil(minY / labelSpacing) * labelSpacing; y <= maxY; y += labelSpacing) {
+    for (let y = Math.ceil(axisMinY / labelSpacing) * labelSpacing; y <= axisMaxY; y += labelSpacing) {
       if (Math.abs(y) < labelSpacing / 2) continue;
       const py = graphToPixel(0, y).y;
       ctx.fillText(y.toFixed(labelSpacing < 1 ? 1 : 0), origin.x - 8, py + 4);
@@ -796,228 +796,306 @@ export default function Math() {
   };
 
   return (
-    <div className="h-screen bg-neutral-950 text-neutral-200 flex flex-col">
+    <div className="h-screen bg-white text-gray-900 flex flex-col">
       <Header />
 
       <main className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar - Controls */}
-        <aside className="w-80 border-r border-neutral-800 overflow-y-auto">
-            {/* Functions */}
-            <div className="p-4 border-b border-neutral-800">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wide">Functions</h3>
+        {/* Toolbar */}
+        <aside className="w-16 bg-gray-100 border-r border-gray-300 flex flex-col items-center py-4 gap-2">
+          <button
+            onClick={() => { setMode('select'); setTempConstruction(null); }}
+            className={`p-3 rounded transition ${
+              mode === 'select' 
+                ? 'bg-blue-500 text-white' 
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+            title="Select (Esc)"
+          >
+            <FiMove size={20} />
+          </button>
+          
+          <button
+            onClick={() => { setMode('point'); setTempConstruction(null); }}
+            className={`p-3 rounded transition ${
+              mode === 'point' 
+                ? 'bg-blue-500 text-white' 
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+            title="Point"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
+          
+          <button
+            onClick={() => { setMode('line'); setTempConstruction(null); }}
+            className={`p-3 rounded transition ${
+              mode === 'line' 
+                ? 'bg-blue-500 text-white' 
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+            title="Line"
+          >
+            <FiMinus size={20} />
+          </button>
+          
+          <button
+            onClick={() => { setMode('segment'); setTempConstruction(null); }}
+            className={`p-3 rounded transition ${
+              mode === 'segment' 
+                ? 'bg-blue-500 text-white' 
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+            title="Segment"
+          >
+            <FiSlash size={20} />
+          </button>
+          
+          <button
+            onClick={() => { setMode('circle'); setTempConstruction(null); }}
+            className={`p-3 rounded transition ${
+              mode === 'circle' 
+                ? 'bg-blue-500 text-white' 
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+            title="Circle"
+          >
+            <FiCircle size={20} />
+          </button>
+          
+          <button
+            onClick={() => { setMode('distance'); setTempConstruction(null); }}
+            className={`p-3 rounded transition ${
+              mode === 'distance' 
+                ? 'bg-blue-500 text-white' 
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+            title="Distance"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="8" x2="3" y2="16" />
+              <line x1="21" y1="8" x2="21" y2="16" />
+            </svg>
+          </button>
+
+          <div className="flex-1" />
+          
+          <button
+            onClick={clearAll}
+            className="p-3 text-gray-700 hover:bg-red-100 hover:text-red-600 rounded transition"
+            title="Clear All"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </aside>
+
+        {/* Algebra View */}
+        {showAlgebra && (
+          <aside className="w-72 bg-gray-50 border-r border-gray-300 flex flex-col">
+            <div className="p-3 border-b border-gray-300 bg-white flex items-center justify-between">
+              <h3 className="font-semibold text-sm text-blue-600">Algebra View</h3>
+              <button
+                onClick={() => setShowAlgebra(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto">
+              {/* Objects */}
+              <div className="p-3">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Objects</h4>
+                {objects.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">No objects created</p>
+                ) : (
+                  <div className="space-y-1">
+                    {objects.map(obj => (
+                      <div
+                        key={obj.id}
+                        className={`flex items-center gap-2 p-2 rounded text-sm cursor-pointer transition ${
+                          selectedObjects.includes(obj.id)
+                            ? 'bg-blue-100 border border-blue-300'
+                            : hoveredObject === obj.id
+                            ? 'bg-gray-100'
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => setSelectedObjects([obj.id])}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={obj.visible}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleVisibility(obj.id);
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: obj.color }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold">{obj.label || `Object ${obj.id}`}</div>
+                          <div className="text-xs text-gray-600 truncate">
+                            {getObjectDescription(obj)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Functions */}
+              {functions.length > 0 && (
+                <div className="p-3 border-t border-gray-200">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Functions</h4>
+                  <div className="space-y-2">
+                    {functions.map((func, idx) => (
+                      <div key={func.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={func.visible}
+                          onChange={() => {
+                            setFunctions(functions.map(f =>
+                              f.id === func.id ? { ...f, visible: !f.visible } : f
+                            ));
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: func.color }}
+                        />
+                        <input
+                          type="text"
+                          className="flex-1 bg-white border border-gray-300 px-2 py-1 rounded text-sm font-mono focus:outline-none focus:border-blue-400"
+                          placeholder="f(x) ="
+                          value={func.expression}
+                          onChange={(e) => updateFunction(func.id, e.target.value)}
+                        />
+                        <button
+                          onClick={() => setFunctions(functions.filter(f => f.id !== func.id))}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="p-3 border-t border-gray-200">
                 <button
                   onClick={addFunction}
-                  className="text-xs text-neutral-400 hover:text-purple-400 transition"
+                  className="w-full text-sm text-blue-600 hover:text-blue-700 py-2 border border-dashed border-blue-300 rounded hover:bg-blue-50 transition"
                 >
-                  + Add
+                  + Add Function
                 </button>
-              </div>
-              
-              <div className="space-y-2">
-                {functions.map((func, idx) => (
-                  <div key={func.id} className="group">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={func.visible}
-                        onChange={() => toggleFunction(func.id)}
-                        className="w-4 h-4 accent-purple-500"
-                      />
-                      <div
-                        className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: func.color.main }}
-                      />
-                      <input
-                        type="text"
-                        className={`flex-1 bg-neutral-900 border ${
-                          selectedFunction === func.id ? 'border-purple-500' : 'border-neutral-700'
-                        } focus:border-purple-500 px-3 py-2 rounded text-sm font-mono focus:outline-none`}
-                        placeholder="e.g., sin(a*x)"
-                        value={func.expression}
-                        onChange={(e) => updateFunction(func.id, e.target.value)}
-                        onFocus={() => setSelectedFunction(func.id)}
-                      />
-                      <button
-                        onClick={() => removeFunction(func.id)}
-                        className="text-neutral-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Parameters */}
-            {Object.keys(parameters).length > 0 && (
-              <div className="p-4 border-b border-neutral-800">
-                <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wide mb-3">Parameters</h3>
-                <div className="space-y-4">
-                  {Object.entries(parameters).map(([name, param]) => (
-                    <div key={name}>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-sm font-mono">{name}</label>
-                        <span className="text-sm text-purple-400 font-mono">{param.value.toFixed(2)}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={param.min}
-                        max={param.max}
-                        step="0.1"
-                        value={param.value}
-                        onChange={(e) => updateParameter(name, 'value', e.target.value)}
-                        className="w-full accent-purple-500"
-                      />
-                      <div className="flex gap-2 mt-1">
-                        <input
-                          type="number"
-                          value={param.min}
-                          onChange={(e) => updateParameter(name, 'min', e.target.value)}
-                          className="w-16 bg-neutral-900 border border-neutral-700 px-2 py-1 rounded text-xs"
-                          placeholder="min"
-                        />
-                        <input
-                          type="number"
-                          value={param.max}
-                          onChange={(e) => updateParameter(name, 'max', e.target.value)}
-                          className="w-16 bg-neutral-900 border border-neutral-700 px-2 py-1 rounded text-xs"
-                          placeholder="max"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Tools */}
-            <div className="p-4 border-b border-neutral-800">
-              <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wide mb-3">Tools</h3>
-              <div className="space-y-2 text-sm">
-                <label className="flex items-center gap-2 cursor-pointer hover:text-purple-400 transition">
-                  <input
-                    type="checkbox"
-                    checked={tools.showGrid}
-                    onChange={(e) => setTools({...tools, showGrid: e.target.checked})}
-                    className="w-4 h-4 accent-purple-500"
-                  />
-                  Show Grid
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer hover:text-purple-400 transition">
-                  <input
-                    type="checkbox"
-                    checked={tools.showAxes}
-                    onChange={(e) => setTools({...tools, showAxes: e.target.checked})}
-                    className="w-4 h-4 accent-purple-500"
-                  />
-                  Show Axes
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer hover:text-purple-400 transition">
-                  <input
-                    type="checkbox"
-                    checked={tools.showDerivative}
-                    onChange={(e) => setTools({...tools, showDerivative: e.target.checked})}
-                    className="w-4 h-4 accent-purple-500"
-                    disabled={!selectedFunction}
-                  />
-                  Show Derivative (f')
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer hover:text-purple-400 transition">
-                  <input
-                    type="checkbox"
-                    checked={tools.showIntegral}
-                    onChange={(e) => setTools({...tools, showIntegral: e.target.checked})}
-                    className="w-4 h-4 accent-purple-500"
-                    disabled={!selectedFunction}
-                  />
-                  Show Integral (Area)
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer hover:text-purple-400 transition">
-                  <input
-                    type="checkbox"
-                    checked={tools.showTangent}
-                    onChange={(e) => {
-                      setTools({...tools, showTangent: e.target.checked});
-                      if (!e.target.checked) setTangentPoint(null);
-                    }}
-                    className="w-4 h-4 accent-purple-500"
-                    disabled={!selectedFunction}
-                  />
-                  Show Tangent Line
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer hover:text-purple-400 transition">
-                  <input
-                    type="checkbox"
-                    checked={tools.showCriticalPoints}
-                    onChange={(e) => setTools({...tools, showCriticalPoints: e.target.checked})}
-                    className="w-4 h-4 accent-purple-500"
-                    disabled={!selectedFunction}
-                  />
-                  Show Critical Points
-                </label>
-              </div>
-              
-              {tools.showTangent && selectedFunction && (
-                <p className="text-xs text-neutral-500 mt-3">
-                  Shift+Click on graph to place tangent line
-                </p>
-              )}
-            </div>
-
-            {/* View Controls */}
-            <div className="p-4">
-              <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wide mb-3">View</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={zoomIn}
-                  className="flex-1 bg-neutral-800 hover:bg-neutral-700 p-2 rounded transition flex items-center justify-center gap-2"
-                >
-                  <FiZoomIn /> Zoom In
-                </button>
-                <button
-                  onClick={zoomOut}
-                  className="flex-1 bg-neutral-800 hover:bg-neutral-700 p-2 rounded transition flex items-center justify-center gap-2"
-                >
-                  <FiZoomOut /> Zoom Out
-                </button>
-              </div>
-              <button
-                onClick={resetView}
-                className="w-full bg-neutral-800 hover:bg-neutral-700 p-2 rounded transition mt-2 flex items-center justify-center gap-2"
-              >
-                <FiMaximize2 /> Reset View
-              </button>
-              
-              <div className="mt-3 text-xs text-neutral-500 space-y-1">
-                <p>• Scroll to zoom</p>
-                <p>• Ctrl+Drag to pan</p>
-                <p>• Click function to select</p>
               </div>
             </div>
           </aside>
+        )}
 
-          {/* Main Canvas */}
-          <section className="flex-1 bg-gradient-to-br from-neutral-900 to-black relative">
-            <canvas
-              ref={canvasRef}
-              className="w-full h-full cursor-crosshair"
-              onMouseMove={handleMouseMove}
-              onMouseDown={handleMouseDown}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseLeave}
-              onWheel={handleWheel}
-              onContextMenu={(e) => e.preventDefault()}
-            />
+        {/* Main Canvas */}
+        <section className="flex-1 bg-white relative flex flex-col">
+          {/* Top controls */}
+          <div className="absolute top-3 left-3 z-10 flex gap-2">
+            {!showAlgebra && (
+              <button
+                onClick={() => setShowAlgebra(true)}
+                className="bg-white border border-gray-300 px-3 py-2 rounded shadow-sm hover:bg-gray-50 transition text-sm"
+              >
+                Show Algebra
+              </button>
+            )}
             
-            {/* Info overlay */}
-            <div className="absolute top-4 right-4 bg-neutral-900/90 backdrop-blur border border-neutral-700 rounded-lg px-4 py-2 text-xs font-mono">
-              <div>Scale: {viewport.scale.toFixed(1)}x</div>
-              <div>Center: ({viewport.centerX.toFixed(2)}, {viewport.centerY.toFixed(2)})</div>
+            <div className="bg-white border border-gray-300 rounded shadow-sm flex items-center gap-1 px-2">
+              <button
+                onClick={zoomOut}
+                className="p-2 hover:bg-gray-100 rounded transition"
+                title="Zoom Out"
+              >
+                <FiZoomOut size={16} />
+              </button>
+              <button
+                onClick={resetView}
+                className="p-2 hover:bg-gray-100 rounded transition"
+                title="Reset View"
+              >
+                <FiMaximize2 size={16} />
+              </button>
+              <button
+                onClick={zoomIn}
+                className="p-2 hover:bg-gray-100 rounded transition"
+                title="Zoom In"
+              >
+                <FiZoomIn size={16} />
+              </button>
             </div>
-          </section>
-        </main>
+
+            <label className="bg-white border border-gray-300 px-3 py-2 rounded shadow-sm flex items-center gap-2 cursor-pointer hover:bg-gray-50 transition text-sm">
+              <input
+                type="checkbox"
+                checked={showGrid}
+                onChange={(e) => setShowGrid(e.target.checked)}
+                className="w-4 h-4"
+              />
+              Grid
+            </label>
+
+            <label className="bg-white border border-gray-300 px-3 py-2 rounded shadow-sm flex items-center gap-2 cursor-pointer hover:bg-gray-50 transition text-sm">
+              <input
+                type="checkbox"
+                checked={snapToGrid}
+                onChange={(e) => setSnapToGrid(e.target.checked)}
+                className="w-4 h-4"
+              />
+              Snap
+            </label>
+          </div>
+
+          {/* Info overlay */}
+          <div className="absolute top-3 right-3 bg-white border border-gray-300 rounded shadow-sm px-3 py-2 text-xs font-mono z-10">
+            <div className="text-gray-600">Zoom: {viewport.scale.toFixed(0)}x</div>
+            {mousePos && (
+              <div className="text-gray-600">
+                ({pixelToGraph(mousePos.px, mousePos.py).x.toFixed(2)}, {pixelToGraph(mousePos.px, mousePos.py).y.toFixed(2)})
+              </div>
+            )}
+          </div>
+
+          {/* Instructions */}
+          {tempConstruction && (
+            <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm z-10">
+              {tempConstruction.type === 'line' || tempConstruction.type === 'segment' 
+                ? 'Click to place second point'
+                : tempConstruction.type === 'circle'
+                ? 'Click to set radius'
+                : tempConstruction.type === 'distance'
+                ? 'Click second point to measure'
+                : 'Click to continue'}
+            </div>
+          )}
+
+          <canvas
+            ref={canvasRef}
+            className="w-full h-full cursor-crosshair"
+            onMouseMove={handleMouseMove}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+            onWheel={handleWheel}
+            onContextMenu={(e) => e.preventDefault()}
+          />
+        </section>
+      </main>
     </div>
   );
 }
