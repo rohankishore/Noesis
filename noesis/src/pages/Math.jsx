@@ -1,47 +1,46 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Header from '../components/Header';
 import { create, all } from 'mathjs';
-import { FiZoomIn, FiZoomOut, FiMaximize2 } from 'react-icons/fi';
+import { FiZoomIn, FiZoomOut, FiMaximize2, FiMove, FiCircle, FiSlash, FiSquare } from 'react-icons/fi';
+import { TbPoint, TbLine, TbPolygon, TbRuler, TbAngle } from 'react-icons/tb';
 
 const math = create(all);
 
 const colors = [
-  { main: '#a78bfa', light: '#c4b5fd' },
-  { main: '#f97316', light: '#fb923c' },
-  { main: '#22c55e', light: '#4ade80' },
-  { main: '#ec4899', light: '#f472b6' },
-  { main: '#3b82f6', light: '#60a5fa' },
-  { main: '#eab308', light: '#facc15' }
+  '#3b82f6', '#ef4444', '#22c55e', '#a78bfa', '#f97316', 
+  '#ec4899', '#eab308', '#06b6d4', '#8b5cf6', '#f59e0b'
 ];
 
 export default function Math() {
   const canvasRef = useRef(null);
-  const [functions, setFunctions] = useState([
-    { id: 1, expression: '', visible: true, color: colors[0] }
-  ]);
+  
+  // GeoGebra-like state
+  const [mode, setMode] = useState('select'); // select, point, line, circle, polygon, distance, angle
+  const [objects, setObjects] = useState([]);
+  const [selectedObjects, setSelectedObjects] = useState([]);
+  const [hoveredObject, setHoveredObject] = useState(null);
+  const [tempConstruction, setTempConstruction] = useState(null);
+  
+  // Functions (graphing mode)
+  const [functions, setFunctions] = useState([]);
   const [parameters, setParameters] = useState({});
+  
+  // View state
   const [viewport, setViewport] = useState({ 
     centerX: 0, 
     centerY: 0, 
     scale: 40 
   });
   const [mousePos, setMousePos] = useState(null);
-  const [cursorPoint, setCursorPoint] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [draggedObject, setDraggedObject] = useState(null);
   const [dragStart, setDragStart] = useState(null);
+  const [redrawTrigger, setRedrawTrigger] = useState(0);
+  const [showAlgebra, setShowAlgebra] = useState(true);
+  const [showGrid, setShowGrid] = useState(true);
+  const [snapToGrid, setSnapToGrid] = useState(false);
   
-  // Tools state
-  const [tools, setTools] = useState({
-    showGrid: true,
-    showAxes: true,
-    showDerivative: false,
-    showIntegral: false,
-    showTangent: false,
-    showCriticalPoints: false
-  });
-  
-  const [selectedFunction, setSelectedFunction] = useState(null);
-  const [tangentPoint, setTangentPoint] = useState(null);
+  const nextId = useRef(1);
 
   // Extract parameters from all functions
   useEffect(() => {
@@ -94,33 +93,38 @@ export default function Math() {
       const rect = parent.getBoundingClientRect();
       canvas.width = rect.width;
       canvas.height = rect.height;
-      draw();
+      setRedrawTrigger(prev => prev + 1);
     };
 
-    resizeCanvas();
+    const timeoutId = setTimeout(resizeCanvas, 0);
     window.addEventListener('resize', resizeCanvas);
-    return () => window.removeEventListener('resize', resizeCanvas);
-  }, [viewport]);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, []);
 
   useEffect(() => {
     draw();
-  }, [functions, parameters, viewport, tools, tangentPoint, cursorPoint]);
+  }, [functions, parameters, viewport, tools, tangentPoint, cursorPoint, redrawTrigger]);
 
-  const pixelToGraph = useCallback((px, py) => {
+  const pixelToGraph = (px, py) => {
     const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
     const gx = (px - canvas.width / 2) / viewport.scale + viewport.centerX;
     const gy = -(py - canvas.height / 2) / viewport.scale + viewport.centerY;
     return { x: gx, y: gy };
-  }, [viewport]);
+  };
 
-  const graphToPixel = useCallback((gx, gy) => {
+  const graphToPixel = (gx, gy) => {
     const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
     const px = (gx - viewport.centerX) * viewport.scale + canvas.width / 2;
     const py = -(gy - viewport.centerY) * viewport.scale + canvas.height / 2;
     return { x: px, y: py };
-  }, [viewport]);
+  };
 
-  const evaluateFunction = useCallback((expr, x, params) => {
+  const evaluateFunction = (expr, x, params) => {
     try {
       const scope = { x, ...params };
       const node = math.parse(expr);
@@ -129,16 +133,16 @@ export default function Math() {
     } catch (e) {
       return null;
     }
-  }, []);
+  };
 
-  const derivative = useCallback((expr, x, params, h = 0.0001) => {
+  const derivative = (expr, x, params, h = 0.0001) => {
     const y1 = evaluateFunction(expr, x - h, params);
     const y2 = evaluateFunction(expr, x + h, params);
     if (y1 === null || y2 === null) return null;
     return (y2 - y1) / (2 * h);
-  }, [evaluateFunction]);
+  };
 
-  const findCriticalPoints = useCallback((expr, params) => {
+  const findCriticalPoints = (expr, params) => {
     const points = [];
     const canvas = canvasRef.current;
     if (!canvas) return points;
@@ -164,7 +168,7 @@ export default function Math() {
     }
     
     return points;
-  }, [derivative, evaluateFunction, pixelToGraph]);
+  };
 
   const draw = () => {
     const canvas = canvasRef.current;
