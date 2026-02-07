@@ -106,6 +106,19 @@ export default function MathNew() {
     }
   };
 
+  const evaluateImplicit = (expr, x, y, params) => {
+    try {
+      if (!expr.includes('=')) return null;
+      const [left, right] = expr.split('=').map(s => s.trim());
+      const scope = { x, y, ...params };
+      const leftVal = math.parse(left).evaluate(scope);
+      const rightVal = math.parse(right).evaluate(scope);
+      return leftVal - rightVal;
+    } catch (e) {
+      return null;
+    }
+  };
+
   useEffect(() => {
     const allParams = new Set();
     const mathFunctions = ['sin', 'cos', 'tan', 'sqrt', 'exp', 'log', 'abs', 'ceil', 
