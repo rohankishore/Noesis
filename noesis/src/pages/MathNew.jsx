@@ -28,6 +28,7 @@ export default function MathNew() {
   const [showAlgebra, setShowAlgebra] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
   const [snapToGrid, setSnapToGrid] = useState(false);
+  const [showShapesMenu, setShowShapesMenu] = useState(false);
   const nextId = useRef(1);
 
   const pixelToGraph = (px, py) => {
@@ -59,6 +60,43 @@ export default function MathNew() {
 
   const evaluateFunction = (expr, x, params) => {
     try {
+      // Check if it's an implicit equation (contains '=')
+      if (expr.includes('=')) {
+        const [left, right] = expr.split('=').map(s => s.trim());
+        const rhs = math.parse(right).evaluate(params);
+        
+        // Circle: x^2 + y^2 = r^2
+        if (left === 'x^2 + y^2') {
+          const ySq = rhs - x * x;
+          return ySq >= 0 ? Math.sqrt(ySq) : null;
+        }
+        
+        // Ellipse: (x/a)^2 + (y/b)^2 = 1
+        if (left.match(/\(x\/[a-z]\)\^2\s*\+\s*\(y\/[a-z]\)\^2/i)) {
+          const aMatch = left.match(/\(x\/([a-z])\)/i);
+          const bMatch = left.match(/\(y\/([a-z])\)/i);
+          if (aMatch && bMatch) {
+            const a = params[aMatch[1]] || 1;
+            const b = params[bMatch[1]] || 1;
+            const ySq = b * b * (1 - (x / a) ** 2);
+            return ySq >= 0 ? Math.sqrt(ySq) : null;
+          }
+        }
+        
+        // Hyperbola: (x/a)^2 - (y/b)^2 = 1
+        if (left.match(/\(x\/[a-z]\)\^2\s*-\s*\(y\/[a-z]\)\^2/i)) {
+          const aMatch = left.match(/\(x\/([a-z])\)/i);
+          const bMatch = left.match(/\(y\/([a-z])\)/i);
+          if (aMatch && bMatch) {
+            const a = params[aMatch[1]] || 1;
+            const b = params[bMatch[1]] || 1;
+            const ySq = b * b * ((x / a) ** 2 - 1);
+            return ySq >= 0 ? Math.sqrt(ySq) : null;
+          }
+        }
+      }
+      
+      // Regular function
       const scope = { x, ...params };
       const node = math.parse(expr);
       const result = node.evaluate(scope);
@@ -77,9 +115,11 @@ export default function MathNew() {
     functions.forEach(func => {
       if (!func.expression.trim()) return;
       try {
-        const node = math.parse(func.expression);
-        const symbols = node.filter(n => n.isSymbolNode).map(n => n.name);
-        symbols.forEach(sym => {
+        // Remove spaces and parse
+        const expr = func.expression.replace(/\s/g, '');
+        // Extract single letters that are parameters (not x, y, or math functions)
+        const matches = expr.match(/[a-z]/gi) || [];
+        matches.forEach(sym => {
           if (sym !== 'x' && sym !== 'y' && !mathFunctions.includes(sym)) {
             allParams.add(sym);
           }
@@ -93,7 +133,7 @@ export default function MathNew() {
       const updated = { ...prev };
       allParams.forEach(param => {
         if (!(param in updated)) {
-          updated[param] = { value: 1, min: -10, max: 10 };
+          updated[param] = { value: 2, min: -10, max: 10 };
         }
       });
       Object.keys(updated).forEach(param => {
@@ -104,6 +144,16 @@ export default function MathNew() {
       return updated;
     });
   }, [functions]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showShapesMenu && !e.target.closest('aside')) {
+        setShowShapesMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showShapesMenu]);
 
   const getObjectAtPosition = (px, py, tolerance = 10) => {
     const graphPos = pixelToGraph(px, py);
@@ -183,8 +233,6 @@ export default function MathNew() {
     ctx.beginPath();
     ctx.moveTo(0, origin.y);
     ctx.lineTo(w, origin.y);
-    ctx.stroke();
-    ctx.beginPath();
     ctx.moveTo(origin.x, 0);
     ctx.lineTo(origin.x, h);
     ctx.stroke();
@@ -227,30 +275,93 @@ export default function MathNew() {
       };
       const step = (funcBounds.maxX - funcBounds.minX) / w;
 
+      // Check if it's an implicit equation
+      const isImplicit = func.expression.includes('=');
+
       ctx.strokeStyle = func.color;
       ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      
-      let started = false;
-      for (let x = funcBounds.minX; x <= funcBounds.maxX; x += step) {
-        const y = evaluateFunction(func.expression, x, params);
-        if (y !== null && isFinite(y)) {
-          const p = graphToPixel(x, y);
-          if (p.y < -100 || p.y > h + 100) {
-            started = false;
-            continue;
+
+      if (isImplicit) {
+        // Use parametric drawing for perfect closed curves
+        const expr = func.expression.trim();
+        
+        // Circle: x^2 + y^2 = r^2
+        if (expr.startsWith('x^2 + y^2')) {
+          const r = params.r || 2;
+          ctx.beginPath();
+          const segments = 200;
+          for (let i = 0; i <= segments; i++) {
+            const t = (i / segments) * 2 * Math.PI;
+            const x = r * Math.cos(t);
+            const y = r * Math.sin(t);
+            const p = graphToPixel(x, y);
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
           }
-          if (!started) {
-            ctx.moveTo(p.x, p.y);
-            started = true;
-          } else {
-            ctx.lineTo(p.x, p.y);
-          }
-        } else {
-          started = false;
+          ctx.stroke();
         }
+        // Ellipse: (x/a)^2 + (y/b)^2 = 1
+        else if (expr.match(/\(x\/[a-z]\)\^2\s*\+\s*\(y\/[a-z]\)\^2/i)) {
+          const a = params.a || 2;
+          const b = params.b || 1;
+          ctx.beginPath();
+          const segments = 200;
+          for (let i = 0; i <= segments; i++) {
+            const t = (i / segments) * 2 * Math.PI;
+            const x = a * Math.cos(t);
+            const y = b * Math.sin(t);
+            const p = graphToPixel(x, y);
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+          }
+          ctx.stroke();
+        }
+        // Hyperbola: (x/a)^2 - (y/b)^2 = 1
+        else if (expr.match(/\(x\/[a-z]\)\^2\s*-\s*\(y\/[a-z]\)\^2/i)) {
+          const a = params.a || 2;
+          const b = params.b || 1;
+          
+          // Draw both branches
+          [-1, 1].forEach(sign => {
+            ctx.beginPath();
+            const tMin = -3;
+            const tMax = 3;
+            const segments = 100;
+            for (let i = 0; i <= segments; i++) {
+              const t = tMin + (i / segments) * (tMax - tMin);
+              const x = sign * a * Math.cosh(t);
+              const y = b * Math.sinh(t);
+              const p = graphToPixel(x, y);
+              if (i === 0) ctx.moveTo(p.x, p.y);
+              else ctx.lineTo(p.x, p.y);
+            }
+            ctx.stroke();
+          });
+        }
+      } else {
+        // Regular function
+        ctx.beginPath();
+        let started = false;
+        for (let x = funcBounds.minX; x <= funcBounds.maxX; x += step) {
+          const y = evaluateFunction(func.expression, x, params);
+          if (y !== null && isFinite(y)) {
+            const p = graphToPixel(x, y);
+            if (p.y < -100 || p.y > h + 100) {
+              started = false;
+              continue;
+            }
+            if (!started) {
+              ctx.moveTo(p.x, p.y);
+              started = true;
+            } else {
+              ctx.lineTo(p.x, p.y);
+            }
+          } else {
+            started = false;
+          }
+        }
+        ctx.stroke();
       }
-      ctx.stroke();
     });
   };
 
@@ -378,20 +489,17 @@ export default function MathNew() {
     switch(type) {
       case 'circle':
         expressions = [
-          { expr: 'sqrt(r^2 - x^2)', desc: 'Circle (upper)' },
-          { expr: '-sqrt(r^2 - x^2)', desc: 'Circle (lower)' }
+          { expr: 'x^2 + y^2 = r^2', desc: 'Circle' }
         ];
         break;
       case 'ellipse':
         expressions = [
-          { expr: 'b*sqrt(1 - (x/a)^2)', desc: 'Ellipse (upper)' },
-          { expr: '-b*sqrt(1 - (x/a)^2)', desc: 'Ellipse (lower)' }
+          { expr: '(x/a)^2 + (y/b)^2 = 1', desc: 'Ellipse' }
         ];
         break;
       case 'hyperbola':
         expressions = [
-          { expr: 'b*sqrt((x/a)^2 - 1)', desc: 'Hyperbola (upper)' },
-          { expr: '-b*sqrt((x/a)^2 - 1)', desc: 'Hyperbola (lower)' }
+          { expr: '(x/a)^2 - (y/b)^2 = 1', desc: 'Hyperbola' }
         ];
         break;
       case 'parabola':
@@ -413,12 +521,13 @@ export default function MathNew() {
     }));
     
     setFunctions([...functions, ...newFuncs]);
+    setShowShapesMenu(false);
   };
 
   return (
     <div className="h-screen bg-white text-gray-900 flex flex-col">
       <main className="flex flex-1 overflow-hidden">
-        <aside className="w-16 bg-gray-100 border-r border-gray-300 flex flex-col items-center py-4 gap-2">
+        <aside className="w-16 bg-gray-100 border-r border-gray-300 flex flex-col items-center py-4 gap-2 relative">
           <button
             onClick={() => navigate('/')}
             className="p-3 rounded transition text-gray-700 hover:bg-gray-200 mb-4"
@@ -445,6 +554,60 @@ export default function MathNew() {
               <circle cx="12" cy="12" r="3" />
             </svg>
           </button>
+
+          <div className="relative">
+            <button
+              onClick={() => setShowShapesMenu(!showShapesMenu)}
+              className="p-3 rounded transition text-gray-700 hover:bg-gray-200"
+              title="Shapes"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="8" />
+              </svg>
+            </button>
+
+            {showShapesMenu && (
+              <div className="absolute left-full ml-2 top-0 bg-white border border-gray-300 rounded-lg shadow-lg py-2 w-40 z-50">
+                <button
+                  onClick={() => addPresetFunction('circle')}
+                  className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm flex items-center gap-2"
+                >
+                  <span>○</span> Circle
+                </button>
+                <button
+                  onClick={() => addPresetFunction('ellipse')}
+                  className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm flex items-center gap-2"
+                >
+                  <span>⬭</span> Ellipse
+                </button>
+                <button
+                  onClick={() => addPresetFunction('hyperbola')}
+                  className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm flex items-center gap-2"
+                >
+                  <span>⟩⟨</span> Hyperbola
+                </button>
+                <button
+                  onClick={() => addPresetFunction('parabola')}
+                  className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm flex items-center gap-2"
+                >
+                  <span>⌒</span> Parabola
+                </button>
+                <div className="border-t border-gray-200 my-1"></div>
+                <button
+                  onClick={() => addPresetFunction('sine')}
+                  className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm flex items-center gap-2"
+                >
+                  <span>∿</span> Sine
+                </button>
+                <button
+                  onClick={() => addPresetFunction('cosine')}
+                  className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm flex items-center gap-2"
+                >
+                  <span>∿</span> Cosine
+                </button>
+              </div>
+            )}
+          </div>
         </aside>
 
         {showAlgebra && (
@@ -485,46 +648,6 @@ export default function MathNew() {
                     className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
                   >
                     + Add
-                  </button>
-                </div>
-
-                {/* Preset Functions */}
-                <div className="mb-3 grid grid-cols-2 gap-1">
-                  <button
-                    onClick={() => addPresetFunction('circle')}
-                    className="text-xs bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 px-2 py-1 rounded transition"
-                  >
-                    ○ Circle
-                  </button>
-                  <button
-                    onClick={() => addPresetFunction('ellipse')}
-                    className="text-xs bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 px-2 py-1 rounded transition"
-                  >
-                    ⬭ Ellipse
-                  </button>
-                  <button
-                    onClick={() => addPresetFunction('hyperbola')}
-                    className="text-xs bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 px-2 py-1 rounded transition"
-                  >
-                    ⟩⟨ Hyperbola
-                  </button>
-                  <button
-                    onClick={() => addPresetFunction('parabola')}
-                    className="text-xs bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 px-2 py-1 rounded transition"
-                  >
-                    ⌒ Parabola
-                  </button>
-                  <button
-                    onClick={() => addPresetFunction('sine')}
-                    className="text-xs bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 px-2 py-1 rounded transition"
-                  >
-                    ∿ Sine
-                  </button>
-                  <button
-                    onClick={() => addPresetFunction('cosine')}
-                    className="text-xs bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 px-2 py-1 rounded transition"
-                  >
-                    ∿ Cosine
                   </button>
                 </div>
 
