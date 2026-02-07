@@ -601,6 +601,49 @@ export default function MathNew() {
   };
 
   const updateFunction = (id, expression) => {
+    // Check for point notation: a = (x, y)
+    const pointMatch = expression.match(/^([a-zA-Z])\s*=\s*\(\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)$/);
+    if (pointMatch) {
+      const label = pointMatch[1];
+      const x = parseFloat(pointMatch[2]);
+      const y = parseFloat(pointMatch[3]);
+      
+      // Check if a point with this label already exists
+      const existingPoint = objects.find(o => o.type === 'point' && o.label === label);
+      if (existingPoint) {
+        // Update existing point
+        setObjects(objects.map(o => 
+          o.id === existingPoint.id ? { ...o, x, y } : o
+        ));
+      } else {
+        // Create new point
+        const newPointId = nextId.current++;
+        setObjects([...objects, {
+          id: newPointId,
+          type: 'point',
+          x,
+          y,
+          label,
+          color: colors[objects.filter(o => o.type === 'point').length % colors.length],
+          visible: true
+        }]);
+      }
+      
+      // Remove this function entry and add a new empty one
+      const updatedFunctions = functions.filter(f => f.id !== id);
+      if (updatedFunctions.length === 0 || updatedFunctions[updatedFunctions.length - 1].expression.trim() !== '') {
+        const newId = nextId.current++;
+        updatedFunctions.push({
+          id: newId,
+          expression: '',
+          visible: true,
+          color: colors[updatedFunctions.length % colors.length]
+        });
+      }
+      setFunctions(updatedFunctions);
+      return;
+    }
+    
     // Parse function notation shortcuts
     let parsedExpr = expression;
     
@@ -832,7 +875,7 @@ export default function MathNew() {
                       <input
                         type="text"
                         className="flex-1 bg-white border border-gray-300 px-2 py-1 rounded text-sm font-mono focus:outline-none focus:border-blue-400"
-                        placeholder="e.g., sin(a*x), circle(5), heart"
+                        placeholder="e.g., a=(2,3), sin(x), circle(5), heart"
                         value={func.expression}
                         onChange={(e) => {
                           updateFunction(func.id, e.target.value);
@@ -862,7 +905,7 @@ export default function MathNew() {
                       <input
                         type="text"
                         className="flex-1 bg-white border border-gray-300 px-2 py-1 rounded text-sm font-mono focus:outline-none focus:border-blue-400"
-                        placeholder="e.g., sin(a*x), circle(5), heart"
+                        placeholder="e.g., a=(2,3), sin(x), circle(5), heart"
                         onFocus={addFunction}
                       />
                     </div>
