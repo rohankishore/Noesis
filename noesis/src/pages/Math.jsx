@@ -42,45 +42,97 @@ export default function Math() {
   
   const nextId = useRef(1);
 
-  // Extract parameters from all functions
-  useEffect(() => {
-    const allParams = new Set();
-    const mathFunctions = ['sin', 'cos', 'tan', 'sqrt', 'exp', 'log', 'abs', 'ceil', 
-                          'floor', 'round', 'sign', 'ln', 'asin', 'acos', 'atan', 
-                          'sinh', 'cosh', 'tanh', 'log10', 'cbrt', 'e', 'pi', 'PI'];
-    
-    functions.forEach(func => {
-      if (!func.expression.trim()) return;
-      try {
-        const node = math.parse(func.expression);
-        const symbols = node.filter(n => n.isSymbolNode).map(n => n.name);
-        symbols.forEach(sym => {
-          if (sym !== 'x' && sym !== 'y' && !mathFunctions.includes(sym)) {
-            allParams.add(sym);
-          }
-        });
-      } catch (e) {
-        // Ignore parsing errors
-      }
-    });
+  // Utility functions
+  const pixelToGraph = (px, py) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const gx = (px - canvas.width / 2) / viewport.scale + viewport.centerX;
+    const gy = -(py - canvas.height / 2) / viewport.scale + viewport.centerY;
+    return { x: gx, y: gy };
+  };
 
-    // Add new parameters with default values
-    setParameters(prev => {
-      const updated = { ...prev };
-      allParams.forEach(param => {
-        if (!(param in updated)) {
-          updated[param] = { value: 1, min: -10, max: 10 };
+  const graphToPixel = (gx, gy) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const px = (gx - viewport.centerX) * viewport.scale + canvas.width / 2;
+    const py = -(gy - viewport.centerY) * viewport.scale + canvas.height / 2;
+    return { x: px, y: py };
+  };
+
+  const snap = (value) => {
+    if (!snapToGrid) return value;
+    const gridSize = 0.5;
+    return Math.round(value / gridSize) * gridSize;
+  };
+
+  const distance = (x1, y1, x2, y2) => {
+    return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+  };
+
+  const pointDistance = (p1, p2) => {
+    return distance(p1.x, p1.y, p2.x, p2.y);
+  };
+
+  const getObjectAtPosition = (px, py, tolerance = 10) => {
+    const graphPos = pixelToGraph(px, py);
+    
+    for (let i = objects.length - 1; i >= 0; i--) {
+      const obj = objects[i];
+      if (!obj.visible) continue;
+      
+      if (obj.type === 'point') {
+        const screenPos = graphToPixel(obj.x, obj.y);
+        if (distance(px, py, screenPos.x, screenPos.y) < tolerance) {
+          return obj;
         }
-      });
-      // Remove unused parameters
-      Object.keys(updated).forEach(param => {
-        if (!allParams.has(param)) {
-          delete updated[param];
+      } else if (obj.type === 'line' || obj.type === 'segment') {
+        const p1 = getPoint(obj.p1);
+        const p2 = getPoint(obj.p2);
+        if (!p1 || !p2) continue;
+        
+        const dist = distanceToSegment(graphPos, p1, p2, obj.type === 'line');
+        if (dist < tolerance / viewport.scale) {
+          return obj;
         }
-      });
-      return updated;
-    });
-  }, [functions]);
+      } else if (obj.type === 'circle') {
+        const center = getPoint(obj.center);
+        if (!center) continue;
+        
+        const r = obj.radius;
+        const d = pointDistance(graphPos, center);
+        if (Math.abs(d - r) < tolerance / viewport.scale) {
+          return obj;
+        }
+      }
+    }
+    return null;
+  };
+
+  const getPoint = (id) => {
+    const obj = objects.find(o => o.id === id && o.type === 'point');
+    return obj || null;
+  };
+
+  const distanceToSegment = (p, p1, p2, isInfiniteLine = false) => {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const lenSq = dx * dx + dy * dy;
+    
+    if (lenSq === 0) return pointDistance(p, p1);
+    
+    let t = ((p.x - p1.x) * dx + (p.y - p1.y) * dy) / lenSq;
+    
+    if (!isInfiniteLine) {
+      t = Math.max(0, Math.min(1, t));
+    }
+    
+    const closest = {
+      x: p1.x + t * dx,
+      y: p1.y + t * dy
+    };
+    
+    return pointDistance(p, closest);
+  };
 
   // Canvas drawing
   useEffect(() => {
