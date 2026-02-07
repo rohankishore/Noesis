@@ -23,8 +23,13 @@ Think of it as your personal physics laboratory, minus the broken beakers and sa
 
 ## Cool Graphs
 
+<div align="center">
+
 <img width="1850" height="972" alt="image" src="https://github.com/user-attachments/assets/b4780444-3aec-4cc9-a5ec-b433902fd308" />
-> sin(x^2 + y^2) = cos(x*y)
+
+>sin(x^2 + y^2) = cos(x*y)
+
+</div>
 
 
 ## ✨ Why Noesis?
