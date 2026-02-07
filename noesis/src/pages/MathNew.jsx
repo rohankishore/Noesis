@@ -211,6 +211,47 @@ export default function MathNew() {
         }
       }
     });
+
+    // Draw functions
+    const params = {};
+    Object.keys(parameters).forEach(key => {
+      params[key] = parameters[key].value;
+    });
+
+    functions.forEach(func => {
+      if (!func.visible || !func.expression.trim()) return;
+
+      const funcBounds = {
+        minX: pixelToGraph(0, 0).x,
+        maxX: pixelToGraph(w, 0).x
+      };
+      const step = (funcBounds.maxX - funcBounds.minX) / w;
+
+      ctx.strokeStyle = func.color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      
+      let started = false;
+      for (let x = funcBounds.minX; x <= funcBounds.maxX; x += step) {
+        const y = evaluateFunction(func.expression, x, params);
+        if (y !== null && isFinite(y)) {
+          const p = graphToPixel(x, y);
+          if (p.y < -100 || p.y > h + 100) {
+            started = false;
+            continue;
+          }
+          if (!started) {
+            ctx.moveTo(p.x, p.y);
+            started = true;
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
+        } else {
+          started = false;
+        }
+      }
+      ctx.stroke();
+    });
   };
 
   const handleMouseMove = (e) => {
