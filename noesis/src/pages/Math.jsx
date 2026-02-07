@@ -89,7 +89,9 @@ export default function Math() {
     if (!canvas) return;
 
     const resizeCanvas = () => {
-      const rect = canvas.parentElement.getBoundingClientRect();
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      const rect = parent.getBoundingClientRect();
       canvas.width = rect.width;
       canvas.height = rect.height;
       draw();
@@ -98,7 +100,7 @@ export default function Math() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     return () => window.removeEventListener('resize', resizeCanvas);
-  }, []);
+  }, [viewport]);
 
   useEffect(() => {
     draw();
@@ -166,9 +168,11 @@ export default function Math() {
 
   const draw = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || canvas.width === 0 || canvas.height === 0) return;
 
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
     const w = canvas.width;
     const h = canvas.height;
 
@@ -541,13 +545,12 @@ export default function Math() {
   };
 
   return (
-    <div className="h-screen bg-neutral-950 text-neutral-200">
-      <div className="flex flex-col h-full">
-        <Header />
+    <div className="h-screen bg-neutral-950 text-neutral-200 flex flex-col">
+      <Header />
 
-        <main className="flex flex-1 overflow-hidden pt-16">
-          {/* Left Sidebar - Controls */}
-          <aside className="w-80 border-r border-neutral-800 overflow-y-auto">
+      <main className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Controls */}
+        <aside className="w-80 border-r border-neutral-800 overflow-y-auto">
             {/* Functions */}
             <div className="p-4 border-b border-neutral-800">
               <div className="flex items-center justify-between mb-3">
@@ -745,7 +748,7 @@ export default function Math() {
           </aside>
 
           {/* Main Canvas */}
-          <section className="flex-1 flex flex-col bg-gradient-to-br from-neutral-900 to-black relative">
+          <section className="flex-1 bg-gradient-to-br from-neutral-900 to-black relative">
             <canvas
               ref={canvasRef}
               className="w-full h-full cursor-crosshair"
@@ -764,7 +767,6 @@ export default function Math() {
             </div>
           </section>
         </main>
-      </div>
     </div>
   );
 }
