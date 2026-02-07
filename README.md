@@ -1,10 +1,7 @@
 <div align="center">
 
-# Noesis
+<img width="3497" height="1324" alt="Group 4" src="https://github.com/user-attachments/assets/966c48cc-af53-438d-8b02-75a722a372f8" />
 
-### A visual environment for mathematical and physical insight
-
-<img width="1711" height="929" alt="image" src="https://github.com/user-attachments/assets/318e2ea0-1072-47d6-9fed-fe910ba81717" />
 
 > *νοῆσις* (noesis) — From ancient Greek, meaning "intellectual understanding" and "direct insight"
 
