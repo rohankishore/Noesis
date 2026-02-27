@@ -13,6 +13,7 @@ import Refraction from './pages/Refraction';
 import LensSimulator from './pages/LensSimulator';
 import Prism from './pages/Prism';
 import Documentation from './pages/Documentation';
+import PendulumDocs from './pages/PendulumDocs';
 import Examples from './pages/Examples';
 import About from './pages/About';
 import './index.css';
@@ -35,6 +36,7 @@ function App() {
           <Route path="/lens-simulator" element={<LensSimulator />} />
           <Route path="/prism" element={<Prism />} />
           <Route path="/documentation" element={<Documentation />} />
+          <Route path="/documentation/pendulum_docs" element={<PendulumDocs />} />
           <Route path="/examples" element={<Examples />} />
           <Route path="/about" element={<About />} />
         </Routes>

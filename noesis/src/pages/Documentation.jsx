@@ -131,7 +131,28 @@ export default function Documentation() {
           link: '#performance'
         }
       ]
-    }
+    },
+    {
+      title: 'Further Documentation',
+      icon: '⚛️',
+      items: [
+        {
+          name: 'Pendulum',
+          description: 'The derivation of equation of motion from first principles',
+          link: '/documentation/pendulum_docs'
+        },
+        {
+          name: 'Projectile Motion',
+          description: 'Derivation of basic equation of motion (Parabolic) from first principles',
+          link: '/documentation/projectile_docs'
+        },
+        {
+          name: 'Electromagnetism',
+          description: 'Derivation of relativistic electromagnetic field effect from PLA',
+          link: '/documentation/electromagnetism_docs'
+        }
+      ]
+    },
   ];
 
   return (
