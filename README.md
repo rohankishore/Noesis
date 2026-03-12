@@ -29,6 +29,13 @@ Think of it as your personal physics laboratory, minus the broken beakers and sa
 
 >sin(x^2 + y^2) = cos(x*y)
 
+## Physics Screenshots
+
+<img width="1858" height="935" alt="image" src="https://github.com/user-attachments/assets/fae0a882-9055-458d-a65f-25d53f27be29" />
+
+<img width="1845" height="953" alt="image" src="https://github.com/user-attachments/assets/c9bec4dd-c972-425b-8358-407c358ac3d4" />
+
+
 </div>
 
 
