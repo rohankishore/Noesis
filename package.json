@@ -1,4 +1,10 @@
 {
+  "scripts": {
+    "dev": "npm run dev --prefix noesis",
+    "build": "npm run build --prefix noesis",
+    "lint": "npm run lint --prefix noesis",
+    "preview": "npm run preview --prefix noesis"
+  },
   "devDependencies": {
     "autoprefixer": "^10.4.24",
     "postcss": "^8.5.6",
